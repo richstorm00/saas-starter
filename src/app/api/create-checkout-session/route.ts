@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     const { planId, interval, userId: providedUserId } = await request.json();
 
     if (!userId && !providedUserId) {
