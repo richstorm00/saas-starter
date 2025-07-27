@@ -16,6 +16,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import { PricingTable } from './pricing-table';
 import Link from 'next/link';
 
 export function LandingPage() {
@@ -64,52 +65,7 @@ export function LandingPage() {
     }
   ];
 
-  const pricingPlans = [
-    {
-      name: "Starter",
-      price: "$9",
-      period: "/month",
-      description: "Perfect for side projects",
-      features: [
-        "Up to 1,000 users",
-        "Basic analytics",
-        "Email support",
-        "Community access"
-      ],
-      cta: "Get Started",
-      popular: false
-    },
-    {
-      name: "Professional",
-      price: "$29",
-      period: "/month",
-      description: "Best for growing businesses",
-      features: [
-        "Up to 10,000 users",
-        "Advanced analytics",
-        "Priority support",
-        "Custom integrations",
-        "Team collaboration"
-      ],
-      cta: "Start Free Trial",
-      popular: true
-    },
-    {
-      name: "Enterprise",
-      price: "Custom",
-      period: "/month",
-      description: "For large-scale applications",
-      features: [
-        "Unlimited users",
-        "Custom features",
-        "Dedicated support",
-        "SLA guarantee",
-        "On-premise option"
-      ],
-      cta: "Contact Sales",
-      popular: false
-    }
-  ];
+  // Pricing plans are now fetched dynamically via PricingTable component
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
@@ -342,60 +298,7 @@ export function LandingPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {pricingPlans.map((plan, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <Card className={`relative border-2 ${
-                  plan.popular 
-                    ? 'border-blue-500 shadow-2xl scale-105' 
-                    : 'border-gray-200 dark:border-gray-700'
-                } hover:shadow-xl transition-all duration-300`}>
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                      <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                        Most Popular
-                      </span>
-                    </div>
-                  )}
-                  
-                  <CardHeader className="text-center">
-                    <CardTitle className="text-2xl mb-2">{plan.name}</CardTitle>
-                    <div className="mb-2">
-                      <span className="text-4xl font-bold text-gray-900 dark:text-white">{plan.price}</span>
-                      <span className="text-gray-600 dark:text-gray-400">{plan.period}</span>
-                    </div>
-                    <CardDescription>{plan.description}</CardDescription>
-                  </CardHeader>
-                  
-                  <CardContent>
-                    <ul className="space-y-3 mb-6">
-                      {plan.features.map((feature, featureIndex) => (
-                        <li key={featureIndex} className="flex items-center">
-                          <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                          <span className="text-gray-700 dark:text-gray-300">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    
-                    <Link href={plan.cta === "Contact Sales" ? "/contact" : "/sign-up"}>
-                      <Button 
-                        className="w-full" 
-                        variant={plan.popular ? "default" : "outline"}
-                      >
-                        {plan.cta}
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+          <PricingTable />
         </div>
       </section>
 
