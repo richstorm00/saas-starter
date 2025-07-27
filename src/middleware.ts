@@ -7,16 +7,18 @@ const isProtectedRoute = createRouteMatcher([
   '/billing(.*)',
 ]);
 
-const isPublicRoute = createRouteMatcher([
-  '/',
-  '/sign-in(.*)',
-  '/sign-up(.*)',
-  '/api/webhooks(.*)',
-  '/api/stripe/webhook',
-]);
+// const isPublicRoute = createRouteMatcher([
+//   '/',
+//   '/sign-in(.*)',
+//   '/sign-up(.*)',
+//   '/api/webhooks(.*)',
+//   '/api/stripe/webhook',
+// ]);
 
-export default clerkMiddleware((auth, req) => {
-  if (isProtectedRoute(req)) auth().protect();
+export default clerkMiddleware(async (auth, req) => {
+  if (isProtectedRoute(req)) {
+    await auth.protect();
+  }
 });
 
 export const config = {

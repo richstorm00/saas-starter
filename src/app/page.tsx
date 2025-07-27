@@ -1,11 +1,15 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AuthNav, AuthFooter } from '@/components/auth-nav';
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-16">
+        <div className="flex justify-end mb-4">
+          <AuthNav />
+        </div>
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">
             SaaS Starter Kit
@@ -62,6 +66,8 @@ export default function HomePage() {
           </Card>
         </div>
       </div>
+      
+      <AuthFooter />
     </div>
   );
 }
