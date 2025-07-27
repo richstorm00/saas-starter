@@ -45,82 +45,21 @@ export function PricingTable({ onPlanSelect, showCurrentPlan = true }: PricingTa
 
   const fetchPricingPlans = async () => {
     try {
-      // In a real implementation, this would fetch from Clerk's billing API
-      // For now, we'll use mock data that matches typical Clerk pricing structure
-      const mockPlans: PricingPlan[] = [
-        {
-          id: 'starter',
-          name: 'Starter',
-          price: 9,
-          currency: 'USD',
-          interval: 'month',
-          description: 'Perfect for side projects and MVPs',
-          features: [
-            'Up to 1,000 monthly active users',
-            'Basic authentication',
-            'Community support',
-            '1GB storage',
-            '10K API calls/month',
-            'Email notifications'
-          ],
-          limits: {
-            users: 1000,
-            storage: '1GB',
-            apiCalls: '10K/month'
-          }
-        },
-        {
-          id: 'professional',
-          name: 'Professional',
-          price: 29,
-          currency: 'USD',
-          interval: 'month',
-          description: 'Best for growing businesses',
-          features: [
-            'Up to 10,000 monthly active users',
-            'Advanced authentication (MFA, SSO)',
-            'Priority support',
-            '10GB storage',
-            '100K API calls/month',
-            'Custom domains',
-            'Advanced analytics',
-            'Team management'
-          ],
-          popular: true,
-          limits: {
-            users: 10000,
-            storage: '10GB',
-            apiCalls: '100K/month'
-          }
-        },
-        {
-          id: 'enterprise',
-          name: 'Enterprise',
-          price: 99,
-          currency: 'USD',
-          interval: 'month',
-          description: 'For large-scale applications',
-          features: [
-            'Unlimited monthly active users',
-            'Enterprise authentication',
-            'Dedicated support',
-            '100GB storage',
-            '1M API calls/month',
-            'Custom integrations',
-            'SLA guarantee',
-            'On-premise option',
-            'Advanced security'
-          ],
-          limits: {
-            storage: '100GB',
-            apiCalls: '1M/month'
-          }
-        }
-      ];
-
-      setPlans(mockPlans);
+      const response = await fetch('/api/pricing/plans');
+      const data = await response.json();
+      
+      if (data.plans && data.plans.length > 0) {
+        setPlans(data.plans);
+      } else {
+        setPlans([]);
+      }
+      
+      if (data.error) {
+        console.error('Pricing plans error:', data.error);
+      }
     } catch (error) {
       console.error('Error fetching pricing plans:', error);
+      setPlans([]);
     } finally {
       setLoading(false);
     }
@@ -192,6 +131,30 @@ export function PricingTable({ onPlanSelect, showCurrentPlan = true }: PricingTa
     return (
       <div className="flex justify-center items-center py-20" data-testid="pricing-loading">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (plans.length === 0) {
+    return (
+      <div className="text-center py-20">
+        <div className="max-w-md mx-auto">
+          <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+            Pricing Plans Not Configured
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            No pricing plans have been configured in your Clerk dashboard. 
+            Please set up your pricing plans in the Clerk dashboard to display them here.
+          </p>
+          <a 
+            href="https://dashboard.clerk.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Go to Clerk Dashboard
+          </a>
+        </div>
       </div>
     );
   }

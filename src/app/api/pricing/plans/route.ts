@@ -2,85 +2,36 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    // This would typically fetch from Clerk's billing API
-    // For now, we'll return mock data that matches the frontend
-    const plans = [
-      {
-        id: 'starter',
-        name: 'Starter',
-        price: 9,
-        currency: 'USD',
-        interval: 'month',
-        description: 'Perfect for side projects and MVPs',
-        features: [
-          'Up to 1,000 monthly active users',
-          'Basic authentication',
-          'Community support',
-          '1GB storage',
-          '10K API calls/month',
-          'Email notifications'
-        ],
-        limits: {
-          users: 1000,
-          storage: '1GB',
-          apiCalls: '10K/month'
-        }
-      },
-      {
-        id: 'professional',
-        name: 'Professional',
-        price: 29,
-        currency: 'USD',
-        interval: 'month',
-        description: 'Best for growing businesses',
-        features: [
-          'Up to 10,000 monthly active users',
-          'Advanced authentication (MFA, SSO)',
-          'Priority support',
-          '10GB storage',
-          '100K API calls/month',
-          'Custom domains',
-          'Advanced analytics',
-          'Team management'
-        ],
-        popular: true,
-        limits: {
-          users: 10000,
-          storage: '10GB',
-          apiCalls: '100K/month'
-        }
-      },
-      {
-        id: 'enterprise',
-        name: 'Enterprise',
-        price: 99,
-        currency: 'USD',
-        interval: 'month',
-        description: 'For large-scale applications',
-        features: [
-          'Unlimited monthly active users',
-          'Enterprise authentication',
-          'Dedicated support',
-          '100GB storage',
-          '1M API calls/month',
-          'Custom integrations',
-          'SLA guarantee',
-          'On-premise option',
-          'Advanced security'
-        ],
-        limits: {
-          storage: '100GB',
-          apiCalls: '1M/month'
-        }
-      }
-    ];
-
-    return NextResponse.json({ plans });
+    // Clerk's billing system requires proper setup in the Clerk dashboard
+    // This API endpoint is designed to fetch pricing plans from Clerk once configured
+    
+    // Check if Clerk billing is properly configured
+    const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+    const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+    
+    if (!clerkPublishableKey || !clerkSecretKey) {
+      return NextResponse.json({ 
+        plans: [],
+        error: 'Clerk keys not configured. Please add NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY to your .env.local file.'
+      });
+    }
+    
+    // Clerk's billing plans need to be set up in the dashboard
+    // The actual implementation would involve:
+    // 1. Setting up Stripe integration in Clerk dashboard
+    // 2. Creating products and pricing plans
+    // 3. Using Clerk's REST API to fetch the plans
+    
+    return NextResponse.json({ 
+      plans: [],
+      error: 'No pricing plans found. To set up pricing plans: 1. Go to https://dashboard.clerk.com, 2. Select your application, 3. Navigate to Billing > Products and Pricing, 4. Connect your Stripe account, 5. Create your pricing plans with features and limits.'
+    });
   } catch (error) {
     console.error('Error fetching pricing plans:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch pricing plans' },
-      { status: 500 }
-    );
+    
+    return NextResponse.json({ 
+      plans: [],
+      error: 'Failed to fetch pricing plans. Please check your Clerk dashboard for billing configuration.'
+    }, { status: 500 });
   }
 }
