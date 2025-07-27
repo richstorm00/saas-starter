@@ -32,7 +32,7 @@ A production-ready, modern SaaS starter kit built with Next.js 15, TypeScript, C
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/saas-starter.git
+git clone https://github.com/richstorm00/saas-starter.git
 cd saas-starter
 
 # Install dependencies
