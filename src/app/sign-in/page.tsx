@@ -1,58 +1,87 @@
-import { SignIn } from '@clerk/nextjs'
-import { Suspense } from 'react'
+'use client';
+
+import { SignIn } from '@clerk/nextjs';
+import { Suspense } from 'react';
 
 export default function SignInPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
-            Welcome back
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400">
-            Sign in to your account to continue
-          </p>
-        </div>
-        
-        <Suspense fallback={
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-8">
-            <div className="animate-pulse">
-              <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-4"></div>
-              <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2 mb-6"></div>
-              <div className="space-y-4">
-                <div className="h-10 bg-slate-200 dark:bg-slate-700 rounded"></div>
-                <div className="h-10 bg-slate-200 dark:bg-slate-700 rounded"></div>
-                <div className="h-10 bg-slate-200 dark:bg-slate-700 rounded w-1/2 mx-auto"></div>
-              </div>
-            </div>
-          </div>
-        }>
-          <SignIn 
-            appearance={{
-              elements: {
-                rootBox: "mx-auto",
-                cardBox: "bg-white dark:bg-slate-800 rounded-lg shadow-lg",
-                card: "p-8",
-                headerTitle: "text-2xl font-semibold text-slate-900 dark:text-white mb-2",
-                headerSubtitle: "text-sm text-slate-600 dark:text-slate-400",
-                socialButtonsBlockButton: "bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 rounded-lg",
-                formButtonPrimary: "bg-blue-600 hover:bg-blue-700 text-white rounded-lg",
-                footerActionLink: "text-blue-600 hover:text-blue-700",
-                formFieldInput: "rounded-lg border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
-                identityPreviewText: "text-slate-700 dark:text-slate-300",
-                alternativeMethodsBlockButton: "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white",
-              },
-              layout: {
-                socialButtonsPlacement: "bottom",
-                socialButtonsVariant: "blockButton",
-              },
-            }}
-            routing="hash"
-            redirectUrl="/dashboard"
-            afterSignInUrl="/dashboard"
-          />
-        </Suspense>
+    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-pink-900/20" />
+      <div className="absolute inset-0 bg-black/50" />
+      
+      {/* Background pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse" />
+        <div className="absolute top-0 -right-4 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse animation-delay-2000" />
+        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse animation-delay-4000" />
       </div>
+
+      <div className="relative z-10 flex min-h-screen items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <div className="mb-8 text-center">
+            <div className="flex items-center justify-center space-x-2 mb-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <span className="text-2xl font-bold">Quantum AI</span>
+            </div>
+            <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              Welcome Back
+            </h1>
+            <p className="text-gray-400">Sign in to access your AI-powered workspace</p>
+          </div>
+
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
+            <SignIn
+              appearance={{
+                elements: {
+                  rootBox: 'mx-auto',
+                  cardBox: 'w-full',
+                  card: 'bg-transparent border-0 shadow-none',
+                  headerTitle: 'hidden',
+                  headerSubtitle: 'hidden',
+                  socialButtonsBlockButton: 'bg-white/10 border border-white/20 text-white hover:bg-white/20',
+                  formFieldLabel: 'text-gray-300',
+                  formFieldInput: 'bg-white/10 border border-white/20 text-white placeholder-gray-500 focus:border-blue-500',
+                  formButtonPrimary: 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white',
+                  footerActionLink: 'text-blue-400 hover:text-blue-300',
+                  identityPreviewText: 'text-gray-300',
+                  identityPreviewEditButton: 'text-blue-400 hover:text-blue-300',
+                  dividerLine: 'bg-white/20',
+                  dividerText: 'text-gray-400',
+                  alert: 'bg-red-500/20 border-red-500/50 text-red-300',
+                  spinner: 'text-blue-400',
+                },
+                variables: {
+                  colorPrimary: '#3b82f6',
+                  colorBackground: 'transparent',
+                  colorText: '#ffffff',
+                  colorInputBackground: 'rgba(255, 255, 255, 0.1)',
+                  colorInputText: '#ffffff',
+                  colorNeutral: '#6b7280',
+                  fontFamily: 'system-ui, -apple-system, sans-serif',
+                  borderRadius: '0.5rem',
+                },
+              }}
+              redirectUrl="/dashboard"
+              afterSignInUrl="/dashboard"
+            />
+          </div>
+
+          <div className="mt-8 text-center">
+            <p className="text-gray-400 text-sm">
+              Don't have an account?{' '}
+              <a href="/sign-up" className="text-blue-400 hover:text-blue-300 font-medium">
+                Sign up here
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+
     </div>
-  )
+  );
 }
