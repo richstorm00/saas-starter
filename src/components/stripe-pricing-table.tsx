@@ -74,6 +74,31 @@ export function StripePricingTable() {
           ]
         },
         {
+          id: 'professional',
+          name: 'Professional',
+          description: 'For growing teams',
+          metadata: {
+            features: '50M tokens per month,Unlimited AI models,Advanced API,Priority support,Custom training',
+            highlight: 'true'
+          },
+          prices: [
+            {
+              id: 'price_pro_monthly',
+              unit_amount: 9900,
+              currency: 'usd',
+              type: 'recurring',
+              recurring: { interval: 'month', interval_count: 1 }
+            },
+            {
+              id: 'price_pro_yearly',
+              unit_amount: 9900 * 12 * 0.75,
+              currency: 'usd',
+              type: 'recurring',
+              recurring: { interval: 'year', interval_count: 1 }
+            }
+          ]
+        },
+        {
           id: 'starter',
           name: 'Starter',
           description: 'Perfect for individuals',
@@ -92,32 +117,6 @@ export function StripePricingTable() {
             {
               id: 'price_starter_yearly',
               unit_amount: 2900 * 12 * 0.75,
-              currency: 'usd',
-              type: 'recurring',
-              recurring: { interval: 'year', interval_count: 1 }
-            }
-          ]
-        },
-        {
-          id: 'professional',
-          name: 'Professional',
-          description: 'For growing teams',
-          metadata: {
-            features: '50M tokens per month,Unlimited AI models,Advanced API,Priority support,Custom training',
-            popular: 'true',
-            highlight: 'true'
-          },
-          prices: [
-            {
-              id: 'price_pro_monthly',
-              unit_amount: 9900,
-              currency: 'usd',
-              type: 'recurring',
-              recurring: { interval: 'month', interval_count: 1 }
-            },
-            {
-              id: 'price_pro_yearly',
-              unit_amount: 9900 * 12 * 0.75,
               currency: 'usd',
               type: 'recurring',
               recurring: { interval: 'year', interval_count: 1 }
@@ -256,9 +255,9 @@ export function StripePricingTable() {
 
       {/* Pricing Cards */}
       <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-        {products.map((product) => {
+        {products.map((product, index) => {
           const currentPrice = getCurrentPrice(product);
-          const isPopular = product.metadata.popular === 'true';
+          const isPopular = index === 1; // Always set 2nd option as most popular
           const isCustom = currentPrice?.unit_amount === 0;
 
           return (
