@@ -28,14 +28,6 @@ export function NewLandingPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => {
-    // Initialize Lucide icons
-    if (mounted && typeof window !== 'undefined') {
-      const lucide = require('lucide');
-      lucide.createIcons({ strokeWidth: 1.5 });
-    }
-  }, [mounted]);
-
   const features = [
     {
       icon: <Zap className="w-6 h-6" />,
@@ -256,39 +248,7 @@ export function NewLandingPage() {
 
           {/* Pricing Section */}
           <section id="pricing" className="pb-24">
-            <div className="max-w-7xl mx-auto">
-              <div className="text-center mb-16">
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-light tracking-tight mb-6">
-                  <span className="bg-gradient-to-r from-white via-blue-200 to-purple-200 bg-clip-text text-transparent">
-                    Choose Your Plan
-                  </span>
-                </h1>
-                <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-12">
-                  Scale with confidence. From startups to enterprises, we have the perfect AI solution for your needs.
-                </p>
-              </div>
-
               <StripePricingTable />
-
-              {/* Trust Indicators */}
-              <div className="mt-20 text-center">
-                <p className="text-gray-400 mb-8">Trusted by teams at</p>
-                <div className="flex flex-wrap justify-center items-center gap-8 opacity-50">
-                  <div className="px-4 py-2 bg-white/5 rounded-lg border border-white/10">
-                    <span className="text-sm font-medium">TechCorp</span>
-                  </div>
-                  <div className="px-4 py-2 bg-white/5 rounded-lg border border-white/10">
-                    <span className="text-sm font-medium">InnovateLabs</span>
-                  </div>
-                  <div className="px-4 py-2 bg-white/5 rounded-lg border border-white/10">
-                    <span className="text-sm font-medium">DataFlow</span>
-                  </div>
-                  <div className="px-4 py-2 bg-white/5 rounded-lg border border-white/10">
-                    <span className="text-sm font-medium">AI Systems</span>
-                  </div>
-                </div>
-              </div>
-            </div>
           </section>
         </main>
 

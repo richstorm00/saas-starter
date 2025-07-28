@@ -35,7 +35,14 @@ export async function GET() {
       })
     );
 
-    return NextResponse.json({ products: productsWithPrices });
+    // Sort products by price: free plans first, then ascending by price
+    const sortedProducts = productsWithPrices.sort((a, b) => {
+      const priceA = a.prices.find(p => p.type === 'recurring')?.unit_amount || 0;
+      const priceB = b.prices.find(p => p.type === 'recurring')?.unit_amount || 0;
+      return priceA - priceB;
+    });
+
+    return NextResponse.json({ products: sortedProducts });
   } catch (error) {
     console.error('Error fetching Stripe products:', error);
     return NextResponse.json(

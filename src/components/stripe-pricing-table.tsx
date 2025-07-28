@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
-import { Zap, Shield, Building, Check } from 'lucide-react';
+import { Zap, Shield, Building, Check, Rocket } from 'lucide-react';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -45,11 +45,34 @@ export function StripePricingTable() {
       if (!response.ok) throw new Error('Failed to fetch products');
       
       const data = await response.json();
-      setProducts(data.products);
+      const sortedProducts = data.products.sort((a: StripeProduct, b: StripeProduct) => {
+        const priceA = getCurrentPrice(a)?.unit_amount || 0;
+        const priceB = getCurrentPrice(b)?.unit_amount || 0;
+        return priceA - priceB;
+      });
+      setProducts(sortedProducts);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load pricing');
-      // Fallback data if Stripe fetch fails
+      // Fallback data if Stripe fetch fails - ordered from cheapest to most expensive
       setProducts([
+        {
+          id: 'enterprise',
+          name: 'Enterprise',
+          description: 'For large organizations',
+          metadata: {
+            features: 'Unlimited tokens,Dedicated models,White-label API,24/7 dedicated support,On-premise deployment',
+            highlight: 'false'
+          },
+          prices: [
+            {
+              id: 'price_enterprise_monthly',
+              unit_amount: 0,
+              currency: 'usd',
+              type: 'recurring',
+              recurring: { interval: 'month', interval_count: 1 }
+            }
+          ]
+        },
         {
           id: 'starter',
           name: 'Starter',
@@ -100,24 +123,6 @@ export function StripePricingTable() {
               recurring: { interval: 'year', interval_count: 1 }
             }
           ]
-        },
-        {
-          id: 'enterprise',
-          name: 'Enterprise',
-          description: 'For large organizations',
-          metadata: {
-            features: 'Unlimited tokens,Dedicated models,White-label API,24/7 dedicated support,On-premise deployment',
-            highlight: 'false'
-          },
-          prices: [
-            {
-              id: 'price_enterprise_monthly',
-              unit_amount: 0,
-              currency: 'usd',
-              type: 'recurring',
-              recurring: { interval: 'month', interval_count: 1 }
-            }
-          ]
         }
       ]);
     } finally {
@@ -161,7 +166,7 @@ export function StripePricingTable() {
     return prices[0];
   };
 
-  const getFeatures = (metadata: any) => {
+  const getFeatures = (metadata: { features?: string }) => {
     return metadata.features?.split(',') || [];
   };
 
@@ -330,25 +335,6 @@ export function StripePricingTable() {
             </div>
           );
         })}
-      </div>
-
-      {/* Trust Indicators */}
-      <div className="mt-20 text-center">
-        <p className="text-gray-400 mb-8">Trusted by teams at</p>
-        <div className="flex flex-wrap justify-center items-center gap-8 opacity-50">
-          <div className="px-4 py-2 bg-white/5 rounded-lg border border-white/10">
-            <span className="text-sm font-medium">TechCorp</span>
-          </div>
-          <div className="px-4 py-2 bg-white/5 rounded-lg border border-white/10">
-            <span className="text-sm font-medium">InnovateLabs</span>
-          </div>
-          <div className="px-4 py-2 bg-white/5 rounded-lg border border-white/10">
-            <span className="text-sm font-medium">DataFlow</span>
-          </div>
-          <div className="px-4 py-2 bg-white/5 rounded-lg border border-white/10">
-            <span className="text-sm font-medium">AI Systems</span>
-          </div>
-        </div>
       </div>
     </div>
   );
