@@ -11,15 +11,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // In a real application, you would:
-    // 1. Save to your database
-    // 2. Send confirmation email
-    // 3. Add to email marketing service
-    // 4. Send admin notification
-    
-    console.log('Waitlist signup:', { email, name, timestamp: new Date().toISOString() });
+    // Submit to Clerk's waitlist API
+    const clerkResponse = await fetch('https://api.clerk.com/v1/waitlist_entries', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`,
+      },
+      body: JSON.stringify({ 
+        email_address: email,
+        name: name 
+      }),
+    });
 
-    return NextResponse.json({ success: true });
+    if (!clerkResponse.ok) {
+      const errorData = await clerkResponse.json();
+      console.error('Clerk waitlist error:', errorData);
+      return NextResponse.json(
+        { error: errorData.message || 'Failed to join waitlist' },
+        { status: clerkResponse.status }
+      );
+    }
+
+    const waitlistData = await clerkResponse.json();
+    console.log('Successfully added to Clerk waitlist:', { email, name, waitlistId: waitlistData.id });
+
+    return NextResponse.json({ 
+      success: true, 
+      waitlistId: waitlistData.id 
+    });
   } catch (error) {
     console.error('Waitlist API error:', error);
     return NextResponse.json(

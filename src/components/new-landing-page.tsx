@@ -12,6 +12,10 @@ const ShaderBackground = dynamic(() => import('./shader-background').then(mod =>
   loading: () => <div className="fixed inset-0 z-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-pink-900/20" />
 });
 
+const StaticBackground = dynamic(() => import('./shader-background').then(mod => mod.StaticBackground), {
+  ssr: false
+});
+
 export function NewLandingPage() {
   const { user } = useUser();
   const [scrolled, setScrolled] = useState(false);
@@ -27,6 +31,9 @@ export function NewLandingPage() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Use static background on non-landing pages
+  const isLandingPage = typeof window !== 'undefined' && window.location.pathname === '/';
 
   const features = [
     {
@@ -74,8 +81,8 @@ export function NewLandingPage() {
 
   return (
     <div className="min-h-screen bg-black text-white relative">
-      {/* Shader Background */}
-      <ShaderBackground />
+      {/* Conditional Background */}
+      {isLandingPage ? <ShaderBackground /> : <StaticBackground />}
 
       {/* Content Overlay */}
       <div className="relative z-10 flex flex-col min-h-screen">

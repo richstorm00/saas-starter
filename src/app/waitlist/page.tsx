@@ -8,10 +8,12 @@ export default function WaitlistPage() {
   const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
 
     try {
       const response = await fetch('/api/waitlist', {
@@ -22,15 +24,16 @@ export default function WaitlistPage() {
         body: JSON.stringify({ email, name }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
         setIsSubmitted(true);
       } else {
-        const error = await response.json();
-        alert(error.error || 'Failed to join waitlist');
+        setError(data.error || 'Failed to join waitlist');
       }
     } catch (error) {
       console.error('Error submitting waitlist:', error);
-      alert('Failed to join waitlist');
+      setError('Failed to join waitlist. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -101,6 +104,12 @@ export default function WaitlistPage() {
 
           <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
             <form onSubmit={handleSubmit} className="space-y-6">
+              {error && (
+                <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+              
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
                   Your Name

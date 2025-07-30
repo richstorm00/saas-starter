@@ -8,6 +8,28 @@ export function ShaderBackground() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    // Performance checks
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const hasBatteryAPI = 'getBattery' in navigator;
+    
+    // Skip on mobile or low battery
+    if (isMobile) {
+      return;
+    }
+
+    // Check battery level if available
+    let shouldSkip = false;
+    if (hasBatteryAPI) {
+      navigator.getBattery().then(battery => {
+        if (battery.level < 0.2 || !battery.charging) {
+          shouldSkip = true;
+          return;
+        }
+      });
+    }
+
+    if (shouldSkip) return;
+
     // Dynamically load Three.js
     const script = document.createElement('script');
     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
@@ -16,6 +38,8 @@ export function ShaderBackground() {
 
     let scene: any, camera: any, renderer: any, material: any, mesh: any;
     let animationId: number;
+    let lastTime = 0;
+    let frameCount = 0;
 
     const initShader = () => {
       if (!window.THREE || !mountRef.current) return;
@@ -25,10 +49,13 @@ export function ShaderBackground() {
       // Create scene
       scene = new THREE.Scene();
       camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-      renderer = new THREE.WebGLRenderer({ alpha: true });
+      renderer = new THREE.WebGLRenderer({ 
+        alpha: true,
+        powerPreference: 'low-power' // Use integrated GPU
+      });
       
       renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Reduced from 2
       mountRef.current.appendChild(renderer.domElement);
 
       // Create geometry
@@ -49,66 +76,38 @@ export function ShaderBackground() {
           uniform float iTime;
           uniform vec2 iResolution;
           
-          // Smooth fract function
-          float sFract(float x, float sm) {
-            const float sf = 1.0;
-            vec2 u = vec2(x, fwidth(x) * sf * sm);
-            u.x = fract(u.x);
-            u += (1.0 - 2.0 * u) * step(u.y, u.x);
-            return clamp(1.0 - u.x / u.y, 0.0, 1.0);
+          // Simplified noise function for better performance
+          float noise(vec2 p) {
+            return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
           }
           
-          float sFloor(float x) {
-            return x - sFract(x, 1.0);
-          }
-          
-          // Hash function for noise
-          vec3 hash33(vec3 p) {
-            float n = sin(dot(p, vec3(7.0, 157.0, 113.0)));
-            return fract(vec3(2097152.0, 262144.0, 32768.0) * n) * 2.0 - 1.0;
-          }
-          
-          // Tetrahedral noise
-          float tetraNoise(vec3 p) {
-            vec3 i = floor(p + dot(p, vec3(1.0 / 3.0)));
-            p -= i - dot(i, vec3(1.0 / 6.0));
-            vec3 i1 = step(p.yzx, p);
-            vec3 i2 = max(i1, 1.0 - i1.zxy);
-            i1 = min(i1, 1.0 - i1.zxy);
-            vec3 p1 = p - i1 + 1.0 / 6.0;
-            vec3 p2 = p - i2 + 1.0 / 3.0;
-            vec3 p3 = p - 0.5;
-            vec4 v = max(0.5 - vec4(dot(p, p), dot(p1, p1), dot(p2, p2), dot(p3, p3)), 0.0);
-            vec4 d = vec4(dot(p, hash33(i)), dot(p1, hash33(i + i1)), dot(p2, hash33(i + i2)), dot(p3, hash33(i + 1.0)));
-            return clamp(dot(d, v * v * v * 8.0) * 1.732 + 0.5, 0.0, 1.0);
-          }
-          
-          // Main pattern function
-          float func(vec2 p) {
-            float n = tetraNoise(vec3(p.x * 3.0, p.y * 3.0, 0.0) - vec3(0.0, 0.15, 0.3) * iTime);
-            float taper = 0.08 + dot(p, p * vec2(0.25, 0.8));
-            n = max(n - taper, 0.0) / max(1.0 - taper, 0.0001);
-            const float palNum = 12.0;
-            return n * 0.2 + clamp(sFloor(n * (palNum - 0.001)) / (palNum - 1.0), 0.0, 1.0) * 0.8;
+          float fbm(vec2 p) {
+            float value = 0.0;
+            float amplitude = 0.5;
+            for (int i = 0; i < 3; i++) { // Reduced from 4-5 octaves
+              value += amplitude * noise(p);
+              p *= 2.0;
+              amplitude *= 0.5;
+            }
+            return value;
           }
           
           void main() {
             vec2 uv = (gl_FragCoord.xy - iResolution.xy * 0.5) / iResolution.y;
-            float f = func(uv);
-            vec2 e = vec2(1.0 / iResolution.y, 0.0);
-            float fxl = func(uv + e.xy);
-            float fxr = func(uv - e.xy);
-            float fyt = func(uv + e.yx);
-            float fyb = func(uv - e.yx);
+            float time = iTime * 0.3; // Slower animation
             
-            // Color palette
-            vec3 col = pow(min(vec3(1.2, 0.8, 1.4) * (f * 0.6 + 0.4), 1.0), vec3(1.0, 1.5, 8.0) * 1.5) + 0.02;
-            col = mix(vec3(0.1, 0.2, 0.4), vec3(0.2, 0.1, 0.3), f);
-            col = mix(col, vec3(0.05, 0.1, 0.2), 1.0 - f);
-            col *= max(1.0 - (abs(fxl - fxr) + abs(fyt - fyb)) * 3.0, 0.0);
-            col *= 0.3;
+            float n = fbm(uv * 2.0 + time);
             
-            gl_FragColor = vec4(sqrt(clamp(col, 0.0, 1.0)), 1.0);
+            // Simplified color palette
+            vec3 color = mix(
+              vec3(0.1, 0.2, 0.4),
+              vec3(0.3, 0.1, 0.5),
+              n
+            );
+            
+            color *= 0.4; // Dimmer
+            
+            gl_FragColor = vec4(color, 0.8);
           }
         `,
         transparent: true,
@@ -118,10 +117,19 @@ export function ShaderBackground() {
       mesh = new THREE.Mesh(geometry, material);
       scene.add(mesh);
 
-      const animate = () => {
-        animationId = requestAnimationFrame(animate);
-        material.uniforms.iTime.value += 0.01;
+      const animate = (currentTime: number) => {
+        if (document.hidden) return;
+        
+        // Limit to 30fps
+        if (currentTime - lastTime < 33.33) {
+          animationId = requestAnimationFrame(animate);
+          return;
+        }
+        lastTime = currentTime;
+
+        material.uniforms.iTime.value += 0.005; // Half speed
         renderer.render(scene, camera);
+        animationId = requestAnimationFrame(animate);
       };
 
       const handleResize = () => {
@@ -131,8 +139,19 @@ export function ShaderBackground() {
         }
       };
 
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          if (animationId) {
+            cancelAnimationFrame(animationId);
+          }
+        } else {
+          animationId = requestAnimationFrame(animate);
+        }
+      };
+
       window.addEventListener('resize', handleResize);
-      animate();
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      animationId = requestAnimationFrame(animate);
     };
 
     script.onload = initShader;
@@ -150,6 +169,7 @@ export function ShaderBackground() {
       }
       
       window.removeEventListener('resize', () => {});
+      document.removeEventListener('visibilitychange', () => {});
     };
   }, []);
 

@@ -2,11 +2,12 @@ import { SignUp } from '@clerk/nextjs';
 import { redirect } from 'next/navigation';
 
 export default function SignUpPage() {
-  // Server-side waitlist check
-  if (process.env.NEXT_PUBLIC_WAITLIST_MODE === 'true') {
+  // Use environment variable to control waitlist vs sign-up
+  if (process.env.NEXT_PUBLIC_SIGNUP_MODE === 'waitlist') {
     redirect('/waitlist');
   }
 
+  // For public mode, show the sign-up form
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
       {/* Background */}
