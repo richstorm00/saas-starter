@@ -142,8 +142,10 @@ export function NewLandingPage() {
                     <Link href="/sign-in">
                       <button className="w-full px-3 py-2 text-gray-300 hover:text-white">Sign In</button>
                     </Link>
-                    <Link href="/sign-up">
-                      <button className="w-full px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg">Get Started</button>
+                    <Link href={process.env.NEXT_PUBLIC_WAITLIST_MODE === 'true' ? '/waitlist' : '/sign-up'}>
+                      <button className="w-full px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg">
+                        {process.env.NEXT_PUBLIC_WAITLIST_MODE === 'true' ? 'Join Waitlist' : 'Get Started'}
+                      </button>
                     </Link>
                   </div>
                 </SignedOut>
@@ -174,11 +176,19 @@ export function NewLandingPage() {
             
             <div className="inline-flex gap-4">
               <SignedOut>
-                <Link href="/sign-up">
-                  <button className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all">
-                    Get Started Free
-                  </button>
-                </Link>
+                {process.env.NEXT_PUBLIC_WAITLIST_MODE === 'true' ? (
+                  <Link href="/waitlist">
+                    <button className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all">
+                      Join Waitlist
+                    </button>
+                  </Link>
+                ) : (
+                  <Link href="/sign-up">
+                    <button className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all">
+                      Get Started Free
+                    </button>
+                  </Link>
+                )}
               </SignedOut>
               
               <SignedIn>

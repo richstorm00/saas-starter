@@ -1,9 +1,12 @@
-'use client';
-
 import { SignUp } from '@clerk/nextjs';
-import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
 
 export default function SignUpPage() {
+  // Server-side waitlist check
+  if (process.env.NEXT_PUBLIC_WAITLIST_MODE === 'true') {
+    redirect('/waitlist');
+  }
+
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
       {/* Background */}
@@ -81,7 +84,6 @@ export default function SignUpPage() {
           </div>
         </div>
       </div>
-
     </div>
   );
 }
