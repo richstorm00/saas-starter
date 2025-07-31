@@ -1,11 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import ForgotPasswordPage from '@/app/forgot-password/page'
 
-// Mock next/navigation
-jest.mock('next/navigation', () => ({
-  redirect: jest.fn(),
-}))
-
 // Mock next/font
 jest.mock('next/font/google', () => ({
   Inter: () => ({
@@ -14,45 +9,31 @@ jest.mock('next/font/google', () => ({
 }))
 
 describe('ForgotPasswordPage', () => {
-  beforeEach(() => {
-    jest.clearAllMocks()
-  })
-
-  it('redirects to sign-in page with reset parameter', () => {
-    const { redirect } = require('next/navigation')
-    
+  it('renders without redirecting', () => {
     render(<ForgotPasswordPage />)
     
-    expect(redirect).toHaveBeenCalledWith('/sign-in?reset=true')
+    expect(screen.getByText('Reset Your Password')).toBeInTheDocument()
   })
 
   it('has consistent styling with other auth pages', () => {
-    // We can't test the rendered content due to redirect
-    // but we can test the component structure exists
-    expect(ForgotPasswordPage).toBeDefined()
-    expect(typeof ForgotPasswordPage).toBe('function')
-  })
-})
-
-describe('Forgot Password Flow', () => {
-  it('uses Clerk\'s built-in password reset functionality', () => {
-    // This test verifies we're using Clerk's native reset flow
-    const { redirect } = require('next/navigation')
+    const { container } = render(<ForgotPasswordPage />)
     
+    const mainDiv = container.firstChild
+    expect(mainDiv).toHaveClass('min-h-screen')
+    expect(mainDiv).toHaveClass('bg-black')
+    expect(mainDiv).toHaveClass('text-white')
+  })
+
+  it('includes the ForgotPasswordForm component', () => {
     render(<ForgotPasswordPage />)
     
-    // Verify we're redirecting to the sign-in page with reset parameter
-    // This triggers Clerk's forgot password flow
-    expect(redirect).toHaveBeenCalledWith('/sign-in?reset=true')
+    expect(screen.getByText('Reset Your Password')).toBeInTheDocument()
   })
 
-  it('follows security best practices', () => {
-    // Ensure we're not implementing custom password reset logic
-    // when Clerk already provides secure implementation
-    const componentCode = ForgotPasswordPage.toString()
+  it('has proper page structure', () => {
+    render(<ForgotPasswordPage />)
     
-    // Should redirect rather than implement custom logic
-    expect(componentCode).toContain('redirect')
-    expect(componentCode).toContain('/sign-in?reset=true')
+    expect(screen.getByText('Quantum AI')).toBeInTheDocument()
+    expect(screen.getByText('Reset Your Password')).toBeInTheDocument()
   })
 })
