@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSignUp } from '@clerk/nextjs';
+import { useSignIn } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -15,7 +15,7 @@ const ProviderIcon = ({ provider, size = 5 }: { provider: string; size?: number 
           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
           <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
           <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-          <path d="M11.4 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
         </svg>
       );
     case 'github':
@@ -95,16 +95,11 @@ const ProviderIcon = ({ provider, size = 5 }: { provider: string; size?: number 
   }
 };
 
-export function CustomSignUpForm() {
-  const { isLoaded, signUp, setActive } = useSignUp();
+export function CustomSignInForm() {
+  const { isLoaded, signIn, setActive } = useSignIn();
   const router = useRouter();
   const [emailAddress, setEmailAddress] = useState('');
   const [password, setPassword] = useState('');
-  const [verifyPassword, setVerifyPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [pendingVerification, setPendingVerification] = useState(false);
-  const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [ssoLoading, setSsoLoading] = useState<string | null>(null);
@@ -120,18 +115,8 @@ export function CustomSignUpForm() {
     }
 
     // Basic validation
-    if (!firstName.trim() || !lastName.trim() || !emailAddress.trim() || !password || !verifyPassword) {
+    if (!emailAddress.trim() || !password) {
       setError('Please fill in all fields');
-      return;
-    }
-
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters');
-      return;
-    }
-
-    if (password !== verifyPassword) {
-      setError('Passwords do not match');
       return;
     }
 
@@ -139,20 +124,24 @@ export function CustomSignUpForm() {
     setError('');
 
     try {
-      const result = await signUp.create({
-        emailAddress: emailAddress.trim(),
+      const result = await signIn.create({
+        identifier: emailAddress.trim(),
         password,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
       });
 
-      const verificationResult = await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
-      
-      setPendingVerification(true);
+      if (result.status === 'complete') {
+        await setActive({ session: result.createdSessionId });
+        // Keep loading active during redirect - it will naturally complete when page unloads
+        router.push('/dashboard');
+      } else {
+        // Handle other statuses like needs_first_factor, needs_second_factor, etc.
+        console.log('Sign-in status:', result.status);
+        setError('Unable to sign in. Please try again.');
+        setLoading(false);
+      }
     } catch (err: unknown) {
-      console.error('Sign-up error:', err);
+      console.error('Sign-in error:', err);
       
-      // Handle different error types
       const clerkError = err as {
         errors?: Array<{
           longMessage?: string;
@@ -163,14 +152,7 @@ export function CustomSignUpForm() {
         status?: number;
       };
       
-      console.error('Detailed error object:', {
-        error: clerkError,
-        status: clerkError.status,
-        errors: clerkError.errors,
-        message: clerkError.message
-      });
-      
-      let errorMessage = 'An error occurred during sign up';
+      let errorMessage = 'Invalid credentials or sign-in failed';
       
       if (clerkError.errors?.[0]?.longMessage) {
         errorMessage = clerkError.errors[0].longMessage;
@@ -180,70 +162,30 @@ export function CustomSignUpForm() {
         errorMessage = clerkError.message;
       }
       
-      // Handle specific CAPTCHA/403 errors
       if (clerkError.status === 403) {
-        errorMessage = 'Sign-up blocked. Please check your network connection or try again.';
+        errorMessage = 'Sign-in blocked. Please check your credentials or try again.';
       }
       
-      // Show actual error to user
       setError(errorMessage);
-      
-      // Log for debugging
-      console.error('Clerk API Error:', {
-        status: clerkError.status,
-        message: errorMessage,
-        fullError: clerkError
-      });
-    } finally {
       setLoading(false);
     }
   };
 
-  const handleVerification = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isLoaded) return;
-
-    setLoading(true);
-    setError('');
-
-    try {
-      const completeSignUp = await signUp.attemptEmailAddressVerification({ code });
-      
-      if (completeSignUp.status === 'complete') {
-        await setActive({ session: completeSignUp.createdSessionId });
-        // Keep loading active during redirect - it will naturally complete when page unloads
-        router.push('/dashboard');
-      } else {
-        // Only stop loading if verification didn't complete
-        setLoading(false);
-      }
-    } catch (err: unknown) {
-      const error = err as { errors?: { longMessage?: string }[] };
-      const errorMessage = error.errors?.[0]?.longMessage || 'Invalid verification code';
-      
-      // Filter out CAPTCHA warnings
-      if (!errorMessage.includes('Smart CAPTCHA widget')) {
-        setError(errorMessage);
-      }
-      setLoading(false);
-    }
-  };
-
-  const handleSSOSignUp = async (provider: string) => {
+  const handleSSOSignIn = async (provider: string) => {
     if (!isLoaded) return;
     
     setSsoLoading(provider);
     setError('');
     
     try {
-      await signUp.authenticateWithRedirect({
+      await signIn.authenticateWithRedirect({
         strategy: `oauth_${provider}`,
-        redirectUrl: '/onboarding',
+        redirectUrl: '/dashboard',
         redirectUrlComplete: '/dashboard',
       });
     } catch (err) {
-      console.error(`${provider} sign-up error:`, err);
-      setError(`Failed to sign up with ${provider}. Please try again.`);
+      console.error(`${provider} sign-in error:`, err);
+      setError(`Failed to sign in with ${provider}. Please try again.`);
       setSsoLoading(null);
     }
   };
@@ -251,18 +193,18 @@ export function CustomSignUpForm() {
   // Detect available SSO providers from Clerk configuration
   useEffect(() => {
     const detectProviders = async () => {
-      if (isLoaded && signUp) {
+      if (isLoaded && signIn) {
         try {
           // Use Clerk's built-in OAuth provider detection
-          const oauthProviders = signUp.supportedExternalAccounts || [];
-          console.log('Clerk supported external accounts for sign-up:', oauthProviders);
+          const oauthProviders = signIn.supportedExternalAccounts || [];
+          console.log('Clerk supported external accounts:', oauthProviders);
           
           // Also check supported first factors as fallback
-          const oauthStrategies = signUp.supportedFirstFactors?.filter(
+          const oauthStrategies = signIn.supportedFirstFactors?.filter(
             factor => factor.strategy && factor.strategy.startsWith('oauth_')
           ) || [];
           
-          console.log('OAuth strategies from first factors for sign-up:', oauthStrategies);
+          console.log('OAuth strategies from first factors:', oauthStrategies);
 
           const providerMap = {
             'google': { id: 'google', name: 'Google', icon: 'google' },
@@ -304,13 +246,13 @@ export function CustomSignUpForm() {
           // Manual fallback for Google since we know it's enabled
           if (providers.length === 0) {
             providers.push({ id: 'google', name: 'Google', icon: 'google' });
-            console.log('Using manual fallback for Google provider in sign-up');
+            console.log('Using manual fallback for Google provider');
           }
 
-          console.log('Final configured providers for sign-up:', providers);
+          console.log('Final configured providers:', providers);
           setAvailableProviders(providers);
         } catch (error) {
-          console.error('Error detecting providers for sign-up:', error);
+          console.error('Error detecting providers:', error);
           // Manual fallback for Google
           setAvailableProviders([
             { id: 'google', name: 'Google', icon: 'google' }
@@ -325,73 +267,7 @@ export function CustomSignUpForm() {
     };
 
     detectProviders();
-  }, [isLoaded, signUp]);
-
-  if (pendingVerification) {
-    return (
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <span className="text-2xl font-bold">Quantum AI</span>
-          </div>
-          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            Verify Your Email
-          </h1>
-          <p className="text-gray-400">Enter the verification code sent to {emailAddress}</p>
-        </div>
-
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
-          <form onSubmit={handleVerification} className="space-y-6">
-            {/* Clerk CAPTCHA container - required for Smart CAPTCHA */}
-            <div id="clerk-captcha" className="hidden" />
-            <div>
-              <label htmlFor="code" className="block text-sm font-medium text-gray-300 mb-2">
-                Verification Code
-              </label>
-              <input
-                type="text"
-                id="code"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="123456"
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
-                required
-              />
-            </div>
-
-            {error && (
-              <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-300 text-sm">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-              <div className="flex items-center justify-center space-x-2">
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Verifying...</span>
-              </div>
-            ) : (
-              'Verify Email'
-            )}
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
+  }, [isLoaded, signIn]);
 
   return (
     <div className="w-full">
@@ -405,9 +281,9 @@ export function CustomSignUpForm() {
           <span className="text-2xl font-bold">Quantum AI</span>
         </div>
         <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-          Create Your Account
+          Welcome Back
         </h1>
-        <p className="text-gray-400">Join thousands of innovators building with AI</p>
+        <p className="text-gray-400">Sign in to access your AI-powered workspace</p>
       </div>
 
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
@@ -429,7 +305,7 @@ export function CustomSignUpForm() {
               <button
                 key={provider.id}
                 type="button"
-                onClick={() => handleSSOSignUp(provider.id)}
+                onClick={() => handleSSOSignIn(provider.id)}
                 disabled={ssoLoading === provider.id}
                 className="w-full flex items-center justify-center space-x-3 py-3 bg-white/10 border border-white/20 rounded-lg text-white hover:bg-white/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -441,7 +317,7 @@ export function CustomSignUpForm() {
                 ) : (
                   <>
                     <ProviderIcon provider={provider.icon} />
-                    <span>Sign up with {provider.name}</span>
+                    <span>Continue with {provider.name}</span>
                   </>
                 )}
               </button>
@@ -460,7 +336,7 @@ export function CustomSignUpForm() {
               <div className="w-full border-t border-white/20"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-transparent text-gray-400">Or sign up with email</span>
+              <span className="px-2 bg-transparent text-gray-400">Or continue with email</span>
             </div>
           </div>
         )}
@@ -468,37 +344,7 @@ export function CustomSignUpForm() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Clerk CAPTCHA container - required for Smart CAPTCHA */}
           <div id="clerk-captcha" className="hidden" />
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-300 mb-2">
-                First Name
-              </label>
-              <input
-                type="text"
-                id="firstName"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
-                placeholder="John"
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-300 mb-2">
-                Last Name
-              </label>
-              <input
-                type="text"
-                id="lastName"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
-                placeholder="Doe"
-                required
-              />
-            </div>
-          </div>
-
+          
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
               Email Address
@@ -529,19 +375,21 @@ export function CustomSignUpForm() {
             />
           </div>
 
-          <div>
-            <label htmlFor="verifyPassword" className="block text-sm font-medium text-gray-300 mb-2">
-              Verify Password
-            </label>
-            <input
-              type="password"
-              id="verifyPassword"
-              value={verifyPassword}
-              onChange={(e) => setVerifyPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
-              placeholder="••••••••"
-              required
-            />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <input
+                id="remember-me"
+                name="remember-me"
+                type="checkbox"
+                className="h-4 w-4 text-blue-600 bg-white/10 border border-white/20 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-300">
+                Remember me
+              </label>
+            </div>
+            <Link href="/forgot-password" className="text-sm text-blue-400 hover:text-blue-300">
+              Forgot password?
+            </Link>
           </div>
 
           {error && (
@@ -561,27 +409,27 @@ export function CustomSignUpForm() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span>Creating Account...</span>
+                <span>Signing In...</span>
               </>
             ) : (
-              'Create Account'
+              'Sign In'
             )}
           </button>
         </form>
+      </div>
 
-        <div className="mt-6 text-center">
-          <p className="text-gray-400 text-sm">
-            Already have an account?{' '}
-            <Link href="/sign-in" className="text-blue-400 hover:text-blue-300 font-medium">
-              Sign in here
-            </Link>
-          </p>
-        </div>
+      <div className="mt-6 text-center">
+        <p className="text-gray-400 text-sm">
+          Don't have an account?{' '}
+          <Link href="/sign-up" className="text-blue-400 hover:text-blue-300 font-medium">
+            Create one here
+          </Link>
+        </p>
       </div>
 
       <div className="mt-8 text-center">
         <p className="text-gray-400 text-sm">
-          By creating an account, you agree to our Terms of Service and Privacy Policy
+          By signing in, you agree to our Terms of Service and Privacy Policy
         </p>
       </div>
     </div>

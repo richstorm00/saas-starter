@@ -1,6 +1,6 @@
 'use client';
 
-import { SignIn } from '@clerk/nextjs';
+import { CustomSignInForm } from './custom-signin-form';
 import { Suspense } from 'react';
 
 export default function SignInPage() {
@@ -17,71 +17,17 @@ export default function SignInPage() {
         <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse animation-delay-4000" />
       </div>
 
-      <div className="relative z-10 flex min-h-screen items-center justify-center px-4">
+      <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
-          <div className="mb-8 text-center">
-            <div className="flex items-center justify-center space-x-2 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <span className="text-2xl font-bold">Quantum AI</span>
+          <Suspense fallback={
+            <div className="flex justify-center items-center min-h-screen">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
             </div>
-            <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              Welcome Back
-            </h1>
-            <p className="text-gray-400">Sign in to access your AI-powered workspace</p>
-          </div>
-
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
-            <SignIn
-              appearance={{
-                elements: {
-                  rootBox: 'mx-auto',
-                  cardBox: 'w-full',
-                  card: 'bg-transparent border-0 shadow-none',
-                  headerTitle: 'hidden',
-                  headerSubtitle: 'hidden',
-                  socialButtonsBlockButton: 'bg-white/10 border border-white/20 text-white hover:bg-white/20',
-                  formFieldLabel: 'text-gray-300',
-                  formFieldInput: 'bg-white/10 border border-white/20 text-white placeholder-gray-500 focus:border-blue-500',
-                  formButtonPrimary: 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white',
-                  footerActionLink: 'text-blue-400 hover:text-blue-300',
-                  identityPreviewText: 'text-gray-300',
-                  identityPreviewEditButton: 'text-blue-400 hover:text-blue-300',
-                  dividerLine: 'bg-white/20',
-                  dividerText: 'text-gray-400',
-                  alert: 'bg-red-500/20 border-red-500/50 text-red-300',
-                  spinner: 'text-blue-400',
-                },
-                variables: {
-                  colorPrimary: '#3b82f6',
-                  colorBackground: 'transparent',
-                  colorText: '#ffffff',
-                  colorInputBackground: 'rgba(255, 255, 255, 0.1)',
-                  colorInputText: '#ffffff',
-                  colorNeutral: '#6b7280',
-                  fontFamily: 'system-ui, -apple-system, sans-serif',
-                  borderRadius: '0.5rem',
-                },
-              }}
-              redirectUrl="/dashboard"
-              afterSignInUrl="/dashboard"
-            />
-          </div>
-
-          <div className="mt-8 text-center">
-            <p className="text-gray-400 text-sm">
-              Don't have an account?{' '}
-              <a href="/sign-up" className="text-blue-400 hover:text-blue-300 font-medium">
-                Sign up here
-              </a>
-            </p>
-          </div>
+          }>
+            <CustomSignInForm />
+          </Suspense>
         </div>
       </div>
-
     </div>
   );
 }
