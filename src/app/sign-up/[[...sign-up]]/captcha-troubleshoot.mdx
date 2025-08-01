@@ -1,0 +1,60 @@
+# CAPTCHA Troubleshooting Guide
+
+## Common CAPTCHA Issues and Solutions
+
+### Issue: "CAPTCHA failed to load"
+
+This error typically occurs due to browser or network-related issues. Here are the most effective solutions:
+
+## ✅ Immediate Solutions (Try in order)
+
+### 1. **Use OAuth Sign-up** (Recommended)
+- Click "Sign up with Google" or "Sign up with GitHub" below
+- These methods bypass CAPTCHA entirely
+- Fastest and most reliable solution
+
+### 2. **Browser Troubleshooting**
+- **Disable ad blockers** (uBlock Origin, AdBlock, etc.)
+- **Disable security extensions** (NoScript, Privacy Badger)
+- **Use incognito/private mode**
+- **Try a different browser** (Chrome, Firefox, Safari, Edge)
+
+### 3. **Network Solutions**
+- **Check firewall settings**
+- **Disable VPN temporarily**
+- **Try mobile data instead of WiFi**
+- **Clear browser cache/cookies**
+
+### 4. **Technical Fixes**
+- **Update your browser** to the latest version
+- **Disable browser extensions** (especially security-focused ones)
+- **Allow JavaScript** from `clerk.com` domains
+- **Check browser console** for specific error messages
+
+## 🔧 Advanced Solutions
+
+### For Developers
+- Ensure `clerk.com` domains are whitelisted in CSP headers
+- Check for conflicts with service workers
+- Verify DNS resolution for `clerk.com` domains
+
+### For Network Admins
+- Whitelist domains: `clerk.com`, `clerk.dev`, `*.clerk.com`
+- Allow connections to: `https://api.clerk.com`, `https://*.clerk.com`
+
+## 📞 Contact Support
+
+If none of these solutions work:
+- **Email**: support@quantumai.com
+- **Include**: Browser type, error message, and steps you've tried
+- **Response time**: Usually within 2-4 hours during business hours
+
+## 🎯 Why This Happens
+
+CAPTCHA failures are usually caused by:
+- **Browser security settings** being too restrictive
+- **Network restrictions** (corporate firewalls, school networks)
+- **Extension conflicts** blocking required scripts
+- **Outdated browsers** not supporting modern security features
+
+The OAuth sign-up options (Google/GitHub) are the most reliable workaround since they don't require CAPTCHA verification.

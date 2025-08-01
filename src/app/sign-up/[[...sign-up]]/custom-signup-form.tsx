@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSignUp } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 const ProviderIcon = ({ provider, size = 5 }: { provider: string; size?: number }) => {
@@ -98,6 +98,7 @@ const ProviderIcon = ({ provider, size = 5 }: { provider: string; size?: number 
 export function CustomSignUpForm() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [emailAddress, setEmailAddress] = useState('');
   const [password, setPassword] = useState('');
   const [verifyPassword, setVerifyPassword] = useState('');
@@ -106,32 +107,48 @@ export function CustomSignUpForm() {
   const [pendingVerification, setPendingVerification] = useState(false);
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
+  const [captchaError, setCaptchaError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [ssoLoading, setSsoLoading] = useState<string | null>(null);
   const [availableProviders, setAvailableProviders] = useState<Array<{id: string, name: string, icon: string}>>([]);
   const [providersLoading, setProvidersLoading] = useState(true);
 
+  // CAPTCHA error detection
+  const isCaptchaError = (error: any): boolean => {
+    if (!error) return false;
+    const message = error.message || error.toString();
+    return message.includes('CAPTCHA') || 
+           message.includes('Smart CAPTCHA') || 
+           message.includes('captcha') ||
+           error.status === 403 ||
+           error.code === 'captcha_required';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isLoaded) {
-      console.error('Clerk not loaded');
+    if (!isLoaded || !signUp) {
+      console.error('Clerk not loaded or signUp unavailable');
       setError('Authentication service not available');
+      setLoading(false);
       return;
     }
 
     // Basic validation
     if (!firstName.trim() || !lastName.trim() || !emailAddress.trim() || !password || !verifyPassword) {
       setError('Please fill in all fields');
+      setLoading(false);
       return;
     }
 
     if (password.length < 8) {
       setError('Password must be at least 8 characters');
+      setLoading(false);
       return;
     }
 
     if (password !== verifyPassword) {
       setError('Passwords do not match');
+      setLoading(false);
       return;
     }
 
@@ -139,14 +156,18 @@ export function CustomSignUpForm() {
     setError('');
 
     try {
+      console.log('Starting sign-up process...');
       const result = await signUp.create({
         emailAddress: emailAddress.trim(),
         password,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
       });
-
+      
+      console.log('Sign-up created:', result);
+      
       const verificationResult = await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+      console.log('Verification prepared:', verificationResult);
       
       setPendingVerification(true);
     } catch (err: unknown) {
@@ -180,9 +201,24 @@ export function CustomSignUpForm() {
         errorMessage = clerkError.message;
       }
       
-      // Handle specific CAPTCHA/403 errors
-      if (clerkError.status === 403) {
-        errorMessage = 'Sign-up blocked. Please check your network connection or try again.';
+      // CAPTCHA error detection and enhanced handling
+      const isCaptcha = isCaptchaError(clerkError);
+      setCaptchaError(isCaptcha);
+      
+      // Handle CAPTCHA errors with enhanced guidance
+      if (isCaptcha) {
+        errorMessage = `🚨 **CAPTCHA Verification Failed**
+
+This appears to be a security verification issue. Here are your **immediate options**:
+
+✅ **Recommended**: Use OAuth below (Google/GitHub) - bypasses CAPTCHA entirely
+🔄 **Alternative Steps**:
+   • Disable ad blockers or security extensions
+   • Use incognito/private mode
+   • Try a different browser (Chrome, Firefox, Safari)
+   • Check your network connection/firewall
+
+🆘 **Still stuck?**: Contact support@quantumai.com`;
       }
       
       // Show actual error to user
@@ -211,17 +247,55 @@ export function CustomSignUpForm() {
       
       if (completeSignUp.status === 'complete') {
         await setActive({ session: completeSignUp.createdSessionId });
-        // Keep loading active during redirect - it will naturally complete when page unloads
-        router.push('/dashboard');
+        
+        // Check for plan parameter to start checkout immediately
+        const plan = searchParams.get('plan');
+        const checkout = searchParams.get('checkout');
+        const returnUrl = searchParams.get('return_url');
+        
+        if (plan && checkout === 'true') {
+          // Start Stripe checkout with the selected plan
+          try {
+            const response = await fetch('/api/stripe/create-checkout-session', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                priceId: plan,
+                userId: completeSignUp.createdUserId,
+                email: emailAddress
+              }),
+            });
+
+            if (response.ok) {
+              const { sessionId } = await response.json();
+              const stripe = await import('@stripe/stripe-js').then(m => m.loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!));
+              
+              if (stripe) {
+                await stripe.redirectToCheckout({ sessionId });
+                return;
+              }
+            }
+          } catch (stripeError) {
+            console.error('Failed to start checkout:', stripeError);
+            // Fall back to dashboard if checkout fails
+          }
+        }
+        
+        // Handle regular return URL or dashboard
+        if (returnUrl && !checkout) {
+          router.push(decodeURIComponent(returnUrl));
+        } else {
+          router.push('/dashboard');
+        }
       } else {
-        // Only stop loading if verification didn't complete
         setLoading(false);
       }
     } catch (err: unknown) {
       const error = err as { errors?: { longMessage?: string }[] };
       const errorMessage = error.errors?.[0]?.longMessage || 'Invalid verification code';
       
-      // Filter out CAPTCHA warnings
       if (!errorMessage.includes('Smart CAPTCHA widget')) {
         setError(errorMessage);
       }
@@ -236,10 +310,26 @@ export function CustomSignUpForm() {
     setError('');
     
     try {
+      // Handle plan preservation for SSO
+      const plan = searchParams.get('plan');
+      const checkout = searchParams.get('checkout');
+      
+      let redirectUrlComplete = '/dashboard';
+      
+      if (plan && checkout === 'true') {
+        // Create a special onboarding route that will handle checkout
+        redirectUrlComplete = `/onboarding?plan=${plan}&checkout=true`;
+      } else {
+        const returnUrl = searchParams.get('return_url');
+        if (returnUrl) {
+          redirectUrlComplete = decodeURIComponent(returnUrl);
+        }
+      }
+      
       await signUp.authenticateWithRedirect({
         strategy: `oauth_${provider}`,
         redirectUrl: '/onboarding',
-        redirectUrlComplete: '/dashboard',
+        redirectUrlComplete,
       });
     } catch (err) {
       console.error(`${provider} sign-up error:`, err);
@@ -253,6 +343,9 @@ export function CustomSignUpForm() {
     const detectProviders = async () => {
       if (isLoaded && signUp) {
         try {
+          console.log('Clerk loaded, signUp available:', !!signUp);
+          console.log('SignUp object:', signUp);
+          
           // Use Clerk's built-in OAuth provider detection
           const oauthProviders = signUp.supportedExternalAccounts || [];
           console.log('Clerk supported external accounts for sign-up:', oauthProviders);
@@ -365,8 +458,21 @@ export function CustomSignUpForm() {
             </div>
 
             {error && (
-              <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-300 text-sm">
-                {error}
+              <div className={`p-4 rounded-lg text-sm ${captchaError ? 'bg-yellow-500/20 border border-yellow-500/50 text-yellow-300' : 'bg-red-500/20 border border-red-500/50 text-red-300'}`}>
+                <div className="flex items-start space-x-2">
+                  <div className="flex-shrink-0">
+                    {captchaError ? (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="whitespace-pre-line">{error}</div>
+                </div>
               </div>
             )}
 
@@ -580,9 +686,25 @@ export function CustomSignUpForm() {
       </div>
 
       <div className="mt-8 text-center">
-        <p className="text-gray-400 text-sm">
+        <p className="text-gray-400 text-sm mb-4">
           By creating an account, you agree to our Terms of Service and Privacy Policy
         </p>
+        
+        {captchaError && (
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 text-sm text-yellow-300 max-w-md mx-auto">
+            <div className="flex items-start space-x-2">
+              <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <p className="font-medium mb-1">CAPTCHA Issues?</p>
+                <p className="text-yellow-200">
+                  Try <strong>Google/GitHub sign-up</strong> above - it bypasses CAPTCHA entirely!
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

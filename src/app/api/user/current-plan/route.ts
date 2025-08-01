@@ -12,19 +12,32 @@ export async function GET() {
       );
     }
 
-    // In a real implementation with Clerk Billing:
-    // 1. Fetch the user's current subscription from Clerk
-    // 2. Return the plan ID and subscription details
+    // Production: Fetch actual subscription from Clerk metadata
+    const { clerkClient } = await import('@clerk/nextjs/server');
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
     
-    // Mock implementation for now
-    const mockSubscription = {
-      planId: null, // or 'starter', 'professional', 'enterprise'
-      status: 'active',
-      currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      cancelAtPeriodEnd: false
-    };
+    const subscription = user.privateMetadata?.subscription;
+    
+    if (!subscription) {
+      return NextResponse.json({
+        planId: null,
+        status: 'inactive',
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false,
+        hasSubscription: false
+      });
+    }
 
-    return NextResponse.json(mockSubscription);
+    return NextResponse.json({
+      planId: subscription.plan?.toLowerCase(),
+      status: subscription.status,
+      currentPeriodEnd: new Date(subscription.currentPeriodEnd * 1000).toISOString(),
+      cancelAtPeriodEnd: subscription.status === 'canceled',
+      hasSubscription: true,
+      subscriptionId: subscription.subscriptionId,
+      customerId: subscription.customerId
+    });
   } catch (error) {
     console.error('Error fetching current plan:', error);
     return NextResponse.json(
