@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { loadStripe } from '@stripe/stripe-js';
 import { Zap, Shield, Building, Check, Rocket } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -34,6 +36,9 @@ export function StripePricingTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<'month' | 'year'>('month');
+  const [loadingButtonId, setLoadingButtonId] = useState<string | null>(null);
+  const { isSignedIn, isLoaded } = useAuth();
+  const { user } = useUser();
 
   useEffect(() => {
     fetchStripeProducts();
@@ -53,91 +58,39 @@ export function StripePricingTable() {
       setProducts(sortedProducts);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load pricing');
-      // Fallback data if Stripe fetch fails - ordered from cheapest to most expensive
-      setProducts([
-        {
-          id: 'enterprise',
-          name: 'Enterprise',
-          description: 'For large organizations',
-          metadata: {
-            features: 'Unlimited tokens,Dedicated models,White-label API,24/7 dedicated support,On-premise deployment',
-            highlight: 'false'
-          },
-          prices: [
-            {
-              id: 'price_enterprise_monthly',
-              unit_amount: 0,
-              currency: 'usd',
-              type: 'recurring',
-              recurring: { interval: 'month', interval_count: 1 }
-            }
-          ]
-        },
-        {
-          id: 'professional',
-          name: 'Professional',
-          description: 'For growing teams',
-          metadata: {
-            features: '50M tokens per month,Unlimited AI models,Advanced API,Priority support,Custom training',
-            highlight: 'true'
-          },
-          prices: [
-            {
-              id: 'price_pro_monthly',
-              unit_amount: 9900,
-              currency: 'usd',
-              type: 'recurring',
-              recurring: { interval: 'month', interval_count: 1 }
-            },
-            {
-              id: 'price_pro_yearly',
-              unit_amount: 9900 * 12 * 0.75,
-              currency: 'usd',
-              type: 'recurring',
-              recurring: { interval: 'year', interval_count: 1 }
-            }
-          ]
-        },
-        {
-          id: 'starter',
-          name: 'Starter',
-          description: 'Perfect for individuals',
-          metadata: {
-            features: '5M tokens per month,10 AI models,API access,Email support',
-            highlight: 'false'
-          },
-          prices: [
-            {
-              id: 'price_starter_monthly',
-              unit_amount: 2900,
-              currency: 'usd',
-              type: 'recurring',
-              recurring: { interval: 'month', interval_count: 1 }
-            },
-            {
-              id: 'price_starter_yearly',
-              unit_amount: 2900 * 12 * 0.75,
-              currency: 'usd',
-              type: 'recurring',
-              recurring: { interval: 'year', interval_count: 1 }
-            }
-          ]
-        }
-      ]);
+      // Production: No fallback - Stripe unavailable
+      console.error('Stripe unavailable:', err);
     } finally {
       setLoading(false);
     }
   };
 
   const handleCheckout = async (priceId: string) => {
+    setLoadingButtonId(priceId);
     try {
+      // Check if user is authenticated
+      if (!isSignedIn) {
+        // Redirect to sign-up with plan selection preserved
+        const returnUrl = encodeURIComponent(`/pricing?plan=${priceId}&checkout=true`);
+        window.location.href = `/sign-up?return_url=${returnUrl}&plan=${priceId}&checkout=true`;
+        return;
+      }
+
       const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ priceId }),
+        body: JSON.stringify({ 
+          priceId,
+          userId: user?.id,
+          email: user?.emailAddresses[0]?.emailAddress
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session');
+      }
 
       const { sessionId } = await response.json();
       const stripe = await stripePromise;
@@ -147,6 +100,9 @@ export function StripePricingTable() {
       }
     } catch (error) {
       console.error('Error creating checkout session:', error);
+      setError('Failed to start checkout. Please try again.');
+    } finally {
+      setLoadingButtonId(null);
     }
   };
 
@@ -258,7 +214,7 @@ export function StripePricingTable() {
         {products.map((product, index) => {
           const currentPrice = getCurrentPrice(product);
           const isPopular = index === 1; // Always set 2nd option as most popular
-          const isCustom = currentPrice?.unit_amount === 0;
+          const isCustom = currentPrice?.unit_amount === 0 && product.name.toLowerCase().includes('custom');
 
           return (
             <div
@@ -321,15 +277,23 @@ export function StripePricingTable() {
                     window.location.href = '/contact-sales';
                   }
                 }}
-                className={`w-full py-3 rounded-xl transition-all font-medium ${
+                disabled={loadingButtonId === currentPrice?.id}
+                className={`w-full py-3 rounded-xl transition-all font-medium flex items-center justify-center space-x-2 ${
                   isPopular
                     ? 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'
                     : isCustom
                     ? 'bg-white/10 hover:bg-white/20 border border-white/20'
                     : 'bg-white/10 hover:bg-white/20 border border-white/20'
-                }`}
+                } ${loadingButtonId === currentPrice?.id ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
-                {isCustom ? 'Contact Sales' : 'Get Started'}
+                {loadingButtonId === currentPrice?.id ? (
+                  <>
+                    <Spinner size="sm" color="white" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <span>{isCustom ? 'Contact Sales' : 'Get Started'}</span>
+                )}
               </button>
             </div>
           );
