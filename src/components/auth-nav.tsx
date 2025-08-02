@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useAuth } from '@clerk/nextjs'
-import { UserButton } from '@clerk/nextjs'
+import { ProfileMenu } from './profile-menu'
 import { Button } from '@/components/ui/button'
 
 export function AuthNav() {
@@ -16,15 +16,7 @@ export function AuthNav() {
             Dashboard
           </Button>
         </Link>
-        <UserButton 
-          afterSignOutUrl="/"
-          appearance={{
-            elements: {
-              avatarBox: "w-8 h-8",
-              userButtonPopoverCard: "bg-white dark:bg-slate-800",
-            }
-          }}
-        />
+        <ProfileMenu />
       </div>
     )
   }

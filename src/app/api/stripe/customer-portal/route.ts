@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -8,16 +8,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Import clerkClient here to avoid SSR issues
+    // Get user data directly from Clerk
     const { clerkClient } = await import('@clerk/nextjs/server');
-    
-    // Get user data
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
     const customerId = user.privateMetadata?.subscription?.customerId;
