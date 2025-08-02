@@ -20,7 +20,7 @@ export function SubscriptionStatus() {
     );
   }
 
-  const subscription = user?.publicMetadata?.subscription as {
+  const subscription = user?.publicMetadata?.subscription || user?.privateMetadata?.subscription as {
     plan: string;
     status: string;
     active: boolean;

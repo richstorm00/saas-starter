@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useUser, useClerk } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, CreditCard, RefreshCw } from 'lucide-react';
-import Link from 'next/link';
+import { Loader2, CreditCard, RefreshCw, Lock, AlertTriangle, CheckCircle, Settings } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface SubscriptionData {
   plan: string;
@@ -16,26 +18,70 @@ interface SubscriptionData {
   price_id: string;
 }
 
+interface PricingPlan {
+  id: string;
+  name: string;
+  description: string;
+  prices: {
+    monthly: {
+      id: string;
+      amount: number;
+      currency: string;
+    };
+    yearly?: {
+      id: string;
+      amount: number;
+      currency: string;
+    };
+  };
+  features: string[];
+  limits: {
+    users?: number;
+    storage?: string;
+    apiCalls?: string;
+  };
+  popular?: boolean;
+}
+
 export default function AccountPage() {
   const { user } = useUser();
+  const { signOut } = useClerk();
   const [subscriptionData, setSubscriptionData] = useState<SubscriptionData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [portalLoading, setPortalLoading] = useState(false);
-  const [refreshLoading, setRefreshLoading] = useState(false);
+  const [showChangePlanModal, setShowChangePlanModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [plans, setPlans] = useState<PricingPlan[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<string>('');
+  const [confirmChange, setConfirmChange] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     fetchSubscriptionData();
+    fetchPlans();
   }, [user]);
 
   const fetchSubscriptionData = async () => {
     if (!user) return;
 
     try {
-      const response = await fetch('/api/user/current-plan');
+      // Add cache busting to prevent stale data
+      const response = await fetch(`/api/user/current-plan?t=${Date.now()}`);
       const data = await response.json();
       
-      if (data.subscription) {
-        setSubscriptionData(data.subscription);
+      console.log('Subscription data received:', data);
+      
+      // Force re-evaluation of subscription state
+      if (data.hasSubscription || data.plan) {
+        setSubscriptionData({
+          plan: data.plan,
+          status: data.status,
+          current_period_end: data.current_period_end,
+          cancel_at_period_end: data.cancel_at_period_end,
+          price_id: data.price_id
+        });
+      } else {
+        setSubscriptionData(null);
       }
     } catch (error) {
       console.error('Error fetching subscription data:', error);
@@ -44,13 +90,30 @@ export default function AccountPage() {
     }
   };
 
-  const handleManageSubscription = async () => {
-    setPortalLoading(true);
+  const fetchPlans = async () => {
     try {
-      const response = await fetch('/api/stripe/customer-portal', {
+      const response = await fetch('/api/pricing/plans');
+      const data = await response.json();
+      setPlans(data.plans || []);
+    } catch (error) {
+      console.error('Error fetching pricing plans:', error);
+    }
+  };
+
+  const handleChangePlan = async () => {
+    if (!selectedPlan || !confirmChange) return;
+    
+    setProcessing(true);
+    try {
+      const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ return_url: window.location.href }),
+        body: JSON.stringify({ 
+          priceId: selectedPlan,
+          mode: 'subscription',
+          success_url: `${window.location.origin}/dashboard/account`,
+          cancel_url: `${window.location.origin}/dashboard/account`,
+        }),
       });
 
       const { url } = await response.json();
@@ -58,16 +121,76 @@ export default function AccountPage() {
         window.location.href = url;
       }
     } catch (error) {
-      console.error('Error opening customer portal:', error);
+      console.error('Error changing plan:', error);
     } finally {
-      setPortalLoading(false);
+      setProcessing(false);
     }
   };
 
-  const handleRefreshData = async () => {
-    setRefreshLoading(true);
-    await fetchSubscriptionData();
-    setRefreshLoading(false);
+  const handleCancelSubscription = async () => {
+    setProcessing(true);
+    try {
+      const response = await fetch('/api/stripe/cancel-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Force immediate state update to show no subscription
+        setSubscriptionData(null);
+        
+        // Give Clerk a moment to update, then refresh
+        setTimeout(async () => {
+          await fetchSubscriptionData();
+        }, 1000);
+        
+        setShowCancelModal(false);
+        alert('Subscription cancelled successfully!');
+      } else {
+        alert(`Error: ${data.error || 'Failed to cancel subscription'}`);
+      }
+    } catch (error) {
+      console.error('Error canceling subscription:', error);
+      alert('Failed to cancel subscription. Please try again.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handlePasswordChange = () => {
+    window.open('https://accounts.clerk.com/password', '_blank');
+  };
+
+  const handleManageSubscription = async () => {
+    try {
+      const response = await fetch('/api/stripe/customer-portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ return_url: window.location.href }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.url) {
+        window.location.href = data.url;
+      } else {
+        console.error('Portal error:', data.error);
+        
+        // Handle configuration error
+        if (data.type === 'configuration_error') {
+          // Redirect to Stripe portal setup
+          window.open('https://dashboard.stripe.com/test/settings/billing/portal', '_blank');
+        } else {
+          alert(`Error: ${data.error || 'Failed to open billing portal'}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error opening customer portal:', error);
+      alert('Failed to open billing portal. Please check your setup.');
+    }
   };
 
   const formatDate = (timestamp: number) => {
@@ -75,6 +198,7 @@ export default function AccountPage() {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
+      timeZone: 'UTC' // Ensure consistent timezone handling
     });
   };
 
@@ -93,6 +217,13 @@ export default function AccountPage() {
     }
   };
 
+  const formatCurrency = (amount: number, currency: string) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency.toUpperCase(),
+    }).format(amount);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -102,7 +233,7 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="max-w-6xl mx-auto p-6 space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Account Settings</h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2">
@@ -110,56 +241,53 @@ export default function AccountPage() {
         </p>
       </div>
 
+      {/* Profile Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Profile Information</CardTitle>
+          <CardTitle className="text-xl">Profile Information</CardTitle>
           <CardDescription>Your basic account details</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        <CardContent className="space-y-6">
+          <div className="grid md:grid-cols-2 gap-6">
             <div>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 First Name
               </label>
-              <p className="text-gray-900 dark:text-white">{user?.firstName || 'Not provided'}</p>
+              <p className="text-gray-900 dark:text-white mt-1">{user?.firstName || 'Not provided'}</p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Last Name
               </label>
-              <p className="text-gray-900 dark:text-white">{user?.lastName || 'Not provided'}</p>
+              <p className="text-gray-900 dark:text-white mt-1">{user?.lastName || 'Not provided'}</p>
             </div>
           </div>
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Email Address
             </label>
-            <p className="text-gray-900 dark:text-white">{user?.emailAddresses[0]?.emailAddress}</p>
+            <p className="text-gray-900 dark:text-white mt-1">{user?.emailAddresses[0]?.emailAddress}</p>
           </div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            Account created: {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown'}
+          <div className="pt-4">
+            <Button
+              onClick={() => setShowPasswordModal(true)}
+              variant="outline"
+              className="flex items-center space-x-2"
+            >
+              <Lock className="w-4 h-4" />
+              <span>Change Password</span>
+            </Button>
           </div>
         </CardContent>
       </Card>
 
+      {/* Current Plan Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Subscription Details</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRefreshData}
-              disabled={refreshLoading}
-            >
-              <RefreshCw className={`w-4 h-4 ${refreshLoading ? 'animate-spin' : ''}`} />
-            </Button>
-          </CardTitle>
-          <CardDescription>
-            Manage your subscription and billing information
-          </CardDescription>
+          <CardTitle className="text-xl">Current Plan</CardTitle>
+          <CardDescription>Your subscription details</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           {subscriptionData ? (
             <>
               <div className="flex items-center justify-between">
@@ -169,7 +297,10 @@ export default function AccountPage() {
                     {subscriptionData.plan}
                   </p>
                 </div>
-                <Badge variant={getStatusColor(subscriptionData.status)} className="capitalize">
+                <Badge 
+                  variant={getStatusColor(subscriptionData.status)} 
+                  className="capitalize"
+                >
                   {subscriptionData.status}
                 </Badge>
               </div>
@@ -180,66 +311,202 @@ export default function AccountPage() {
                   Renews on {formatDate(subscriptionData.current_period_end)}
                 </p>
                 {subscriptionData.cancel_at_period_end && (
-                  <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
-                    ⓘ Will cancel at end of period
-                  </p>
+                  <Alert className="mt-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      Your subscription will be canceled at the end of the current billing period.
+                    </AlertDescription>
+                  </Alert>
                 )}
               </div>
 
-              <div className="pt-4">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <Button
+                  onClick={() => setShowChangePlanModal(true)}
+                  variant="outline"
+                  className="flex items-center space-x-2"
+                >
+                  <CreditCard className="w-4 h-4" />
+                  <span>Change Plan</span>
+                </Button>
                 <Button
                   onClick={handleManageSubscription}
-                  disabled={portalLoading}
-                  className="w-full sm:w-auto"
+                  variant="outline"
+                  className="flex items-center space-x-2"
                 >
-                  {portalLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      Loading...
-                    </>
-                  ) : (
-                    <>
-                      <CreditCard className="w-4 h-4 mr-2" />
-                      Manage Subscription
-                    </>
-                  )}
+                  <Settings className="w-4 h-4" />
+                  <span>Manage Billing</span>
                 </Button>
+                {!subscriptionData.cancel_at_period_end && (
+                  <Button
+                    onClick={() => setShowCancelModal(true)}
+                    variant="destructive"
+                    className="flex items-center space-x-2"
+                  >
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>Cancel Plan</span>
+                  </Button>
+                )}
               </div>
             </>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
                 No active subscription found.
               </p>
-              <Link href="/pricing" className="text-blue-600 hover:underline">
+              <a href="/pricing" className="text-blue-600 hover:underline">
                 View pricing plans
-              </Link>
+              </a>
             </div>
           )}
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Account Actions</CardTitle>
-          <CardDescription>Manage your account settings</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
+      {/* Change Plan Modal */}
+      <Dialog open={showChangePlanModal} onOpenChange={setShowChangePlanModal}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Change Plan</DialogTitle>
+            <DialogDescription>
+              Select a new plan that best fits your needs. Changes take effect immediately.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {plans.map((plan) => (
+              <Card 
+                key={plan.id} 
+                className={`cursor-pointer transition-all ${
+                  selectedPlan === plan.prices.monthly.id 
+                    ? 'ring-2 ring-blue-500' 
+                    : 'hover:shadow-md'
+                }`}
+                onClick={() => setSelectedPlan(plan.prices.monthly.id)}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">{plan.name}</CardTitle>
+                    {plan.popular && (
+                      <Badge variant="secondary">Popular</Badge>
+                    )}
+                  </div>
+                  <CardDescription>{plan.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold mb-4">
+                    {formatCurrency(plan.prices.monthly.amount, plan.prices.monthly.currency)}
+                    <span className="text-sm font-normal text-gray-600">/month</span>
+                  </div>
+                  <ul className="space-y-2">
+                    {plan.features.map((feature, index) => (
+                      <li key={index} className="flex items-center space-x-2 text-sm">
+                        <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="confirm"
+                checked={confirmChange}
+                onCheckedChange={(checked) => setConfirmChange(checked as boolean)}
+              />
+              <label
+                htmlFor="confirm"
+                className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer"
+              >
+                I understand that plan changes take effect immediately and I'll be charged accordingly.
+              </label>
+            </div>
+          </div>
+          <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => window.open('https://dashboard.clerk.com', '_blank')}
-              className="w-full sm:w-auto"
+              onClick={() => {
+                setShowChangePlanModal(false);
+                setSelectedPlan('');
+                setConfirmChange(false);
+              }}
             >
-              <Settings className="w-4 h-4 mr-2" />
-              Advanced Account Settings
+              Cancel
             </Button>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Access your full account settings including password, email, and security options.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+            <Button
+              onClick={handleChangePlan}
+              disabled={!selectedPlan || !confirmChange || processing}
+            >
+              {processing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Processing...
+                </>
+              ) : (
+                'Change Plan'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Plan Modal */}
+      <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Subscription</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel your subscription? This will immediately cancel your Stripe subscription and remove it from your account. You'll lose access to premium features immediately.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowCancelModal(false)}
+            >
+              Keep Subscription
+            </Button>
+            <Button
+              onClick={handleCancelSubscription}
+              variant="destructive"
+              disabled={processing}
+            >
+              {processing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Processing...
+                </>
+              ) : (
+                'Cancel Immediately'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Password Change Modal */}
+      <Dialog open={showPasswordModal} onOpenChange={setShowPasswordModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+            <DialogDescription>
+              You'll be redirected to Clerk's secure password change page.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowPasswordModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handlePasswordChange}>
+              Continue to Password Change
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
