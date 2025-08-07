@@ -20,11 +20,13 @@ export function SubscriptionStatus() {
     );
   }
 
-  const subscription = user?.publicMetadata?.subscription || user?.privateMetadata?.subscription as {
+  interface SubscriptionData {
     plan: string;
     status: string;
     active: boolean;
-  };
+  }
+
+  const subscription = (user?.publicMetadata?.subscription || user?.unsafeMetadata?.subscription) as SubscriptionData | undefined;
 
   if (!subscription) {
     return (
@@ -64,9 +66,9 @@ export function SubscriptionStatus() {
               <Zap className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <p className="font-medium text-white">{subscription.plan} Plan</p>
-              <Badge className={getStatusColor(subscription.status)}>
-                {subscription.status}
+              <p className="font-medium text-white">{subscription?.plan} Plan</p>
+              <Badge className={getStatusColor(subscription?.status || 'inactive')}>
+                {subscription?.status || 'inactive'}
               </Badge>
             </div>
           </div>

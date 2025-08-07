@@ -93,13 +93,13 @@ export default async function DashboardPage() {
             <CardContent>
               <div className="grid sm:grid-cols-2 gap-4">
                 <Link href="/dashboard/account">
-                  <Button className="w-full" variant="outline" className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white transition-all">
+                  <Button className="w-full border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white transition-all" variant="outline">
                     <Settings className="w-4 h-4 mr-2" />
                     Account Settings
                   </Button>
                 </Link>
                 <Link href="/dashboard/subscription">
-                  <Button className="w-full" variant="outline" className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white transition-all">
+                  <Button className="w-full border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white transition-all" variant="outline">
                     <CreditCard className="w-4 h-4 mr-2" />
                     Subscription
                   </Button>
@@ -119,15 +119,15 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <Button className="w-full" variant="outline" className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white transition-all">
+                <Button className="w-full border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white transition-all" variant="outline">
                   <Users className="w-4 h-4 mr-2" />
                   Invite Team Members
                 </Button>
-                <Button className="w-full" variant="outline" className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white transition-all">
+                <Button className="w-full border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white transition-all" variant="outline">
                   <BarChart3 className="w-4 h-4 mr-2" />
                   View Analytics
                 </Button>
-                <Button className="w-full" variant="outline" className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white transition-all">
+                <Button className="w-full border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white transition-all" variant="outline">
                   <FileText className="w-4 h-4 mr-2" />
                   Documentation
                 </Button>

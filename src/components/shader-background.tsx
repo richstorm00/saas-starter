@@ -10,7 +10,7 @@ export function ShaderBackground() {
 
     // Performance checks
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const hasBatteryAPI = 'getBattery' in navigator;
+    const hasBatteryAPI = 'getBattery' in navigator && typeof (navigator as any).getBattery === 'function';
     
     // Skip on mobile or low battery
     if (isMobile) {
@@ -20,11 +20,13 @@ export function ShaderBackground() {
     // Check battery level if available
     let shouldSkip = false;
     if (hasBatteryAPI) {
-      navigator.getBattery().then(battery => {
+      (navigator as any).getBattery().then((battery: any) => {
         if (battery.level < 0.2 || !battery.charging) {
           shouldSkip = true;
           return;
         }
+      }).catch(() => {
+        // Battery API not available, continue
       });
     }
 
@@ -36,15 +38,14 @@ export function ShaderBackground() {
     script.async = true;
     document.head.appendChild(script);
 
-    let scene: any, camera: any, renderer: any, material: any, mesh: any;
+    let scene: THREE.Scene, camera: THREE.OrthographicCamera, renderer: THREE.WebGLRenderer, material: THREE.ShaderMaterial, mesh: THREE.Mesh;
     let animationId: number;
     let lastTime = 0;
-    let frameCount = 0;
 
     const initShader = () => {
-      if (!window.THREE || !mountRef.current) return;
+      if (!(window as any).THREE || !mountRef.current) return;
 
-      const THREE = window.THREE;
+      const THREE = (window as any).THREE;
 
       // Create scene
       scene = new THREE.Scene();
@@ -168,8 +169,8 @@ export function ShaderBackground() {
         renderer.dispose();
       }
       
-      window.removeEventListener('resize', () => {});
-      document.removeEventListener('visibilitychange', () => {});
+      window.removeEventListener('resize', handleResize);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 

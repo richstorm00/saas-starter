@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { loadStripe } from '@stripe/stripe-js';
-import { Zap, Shield, Building, Check, Rocket } from 'lucide-react';
+import { Zap, Building, Check, Rocket } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -37,14 +37,10 @@ export function StripePricingTable() {
   const [error, setError] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<'month' | 'year'>('month');
   const [loadingButtonId, setLoadingButtonId] = useState<string | null>(null);
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn } = useAuth();
   const { user } = useUser();
 
-  useEffect(() => {
-    fetchStripeProducts();
-  }, []);
-
-  const fetchStripeProducts = async () => {
+  const fetchStripeProducts = useCallback(async () => {
     try {
       const response = await fetch('/api/stripe/products');
       if (!response.ok) throw new Error('Failed to fetch products');
@@ -58,12 +54,16 @@ export function StripePricingTable() {
       setProducts(sortedProducts);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load pricing');
-      // Production: No fallback - Stripe unavailable
       console.error('Stripe unavailable:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchStripeProducts();
+  }, [fetchStripeProducts]);
+
 
   const handleCheckout = async (priceId: string) => {
     setLoadingButtonId(priceId);
@@ -113,13 +113,13 @@ export function StripePricingTable() {
     }).format(amount / 100);
   };
 
-  const getCurrentPrice = (product: StripeProduct) => {
+  const getCurrentPrice = useCallback((product: StripeProduct) => {
     const prices = product.prices.filter(p => 
       p.type === 'recurring' && 
       p.recurring?.interval === billingCycle
     );
     return prices[0];
-  };
+  }, [billingCycle]);
 
   const getFeatures = (metadata: { features?: string }) => {
     return metadata.features?.split(',') || [];
