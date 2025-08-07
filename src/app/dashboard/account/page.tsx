@@ -148,13 +148,13 @@ export default function AccountPage() {
         }, 1000);
         
         setShowCancelModal(false);
-        alert('Subscription cancelled successfully!');
+        // Success handled by state update
       } else {
-        alert(`Error: ${data.error || 'Failed to cancel subscription'}`);
+        console.error('Cancel subscription error:', data.error || 'Failed to cancel subscription');
       }
     } catch (error) {
       console.error('Error canceling subscription:', error);
-      alert('Failed to cancel subscription. Please try again.');
+      console.error('Failed to cancel subscription. Please try again.');
     } finally {
       setProcessing(false);
     }
@@ -184,12 +184,12 @@ export default function AccountPage() {
           // Redirect to Stripe portal setup
           window.open('https://dashboard.stripe.com/test/settings/billing/portal', '_blank');
         } else {
-          alert(`Error: ${data.error || 'Failed to open billing portal'}`);
+          console.error('Billing portal error:', data.error || 'Failed to open billing portal');
         }
       }
     } catch (error) {
       console.error('Error opening customer portal:', error);
-      alert('Failed to open billing portal. Please check your setup.');
+      console.error('Failed to open billing portal. Please check your setup.');
     }
   };
 
@@ -250,16 +250,16 @@ export default function AccountPage() {
         <CardContent className="space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <label className="text-sm font-medium text-gray-600">
+              <label className="text-sm font-medium text-gray-300">
                 First Name
               </label>
-              <p className="text-gray-900 mt-1">{user?.firstName || 'Not provided'}</p>
+              <p className="text-white mt-1">{user?.firstName || 'Not provided'}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-600">
+              <label className="text-sm font-medium text-gray-300">
                 Last Name
               </label>
-              <p className="text-gray-900 mt-1">{user?.lastName || 'Not provided'}</p>
+              <p className="text-white mt-1">{user?.lastName || 'Not provided'}</p>
             </div>
           </div>
           <div>
