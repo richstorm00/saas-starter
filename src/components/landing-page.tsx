@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/nextjs';
+import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -20,7 +20,6 @@ import { PricingTable } from './pricing-table';
 import Link from 'next/link';
 
 export function LandingPage() {
-  const { user } = useUser();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -191,7 +190,7 @@ export function LandingPage() {
                 Build Your SaaS <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">10x Faster</span>
               </h1>
               <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
-                Complete SaaS starter kit with authentication, billing, database, and deployment. 
+                Complete SaaS starter kit with authentication, billing, database, and deployment.
                 Everything you need to launch your next big idea.
               </p>
               

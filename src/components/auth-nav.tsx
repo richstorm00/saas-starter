@@ -10,19 +10,19 @@ export function AuthNav() {
 
   if (userId) {
     return (
-      <div className="flex items-center space-x-4">
+      <nav className="flex items-center space-x-4" aria-label="User navigation">
         <Link href="/dashboard">
           <Button variant="ghost" size="sm">
             Dashboard
           </Button>
         </Link>
         <ProfileMenu />
-      </div>
+      </nav>
     )
   }
 
   return (
-    <div className="flex items-center space-x-2">
+    <nav className="flex items-center space-x-2" aria-label="Authentication navigation">
       <Link href="/sign-in">
         <Button variant="ghost" size="sm">
           Sign In
@@ -33,7 +33,7 @@ export function AuthNav() {
           Get Started
         </Button>
       </Link>
-    </div>
+    </nav>
   )
 }
 
@@ -46,26 +46,26 @@ export function AuthFooter() {
             &copy; 2024 SaaS Starter. All rights reserved.
           </div>
           
-          <div className="flex space-x-6 mt-4 md:mt-0">
+          <nav className="flex space-x-6 mt-4 md:mt-0" aria-label="Footer navigation">
             <Link 
               href="/sign-in" 
-              className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 text-sm"
+              className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 text-sm transition-colors focus:outline-none focus:underline"
             >
               Sign In
             </Link>
             <Link 
               href="/sign-up" 
-              className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 text-sm"
+              className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 text-sm transition-colors focus:outline-none focus:underline"
             >
               Sign Up
             </Link>
             <Link 
               href="/forgot-password" 
-              className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 text-sm"
+              className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 text-sm transition-colors focus:outline-none focus:underline"
             >
               Forgot Password
             </Link>
-          </div>
+          </nav>
         </div>
       </div>
     </footer>

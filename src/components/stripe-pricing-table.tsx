@@ -224,6 +224,8 @@ export function StripePricingTable() {
                   ? 'border-blue-500/50 shadow-2xl scale-[1.02] bg-gradient-to-b from-white/10 to-white/5'
                   : 'border-white/10 hover:border-white/20'
               }`}
+              role="article"
+              aria-labelledby={`plan-${product.id}-title`}
             >
               {isPopular && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-2 rounded-full text-sm font-medium">
@@ -240,7 +242,7 @@ export function StripePricingTable() {
                   {getIconForPlan(product.name)}
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-2xl font-medium tracking-tight">{product.name}</h3>
+                  <h3 id={`plan-${product.id}-title`} className="text-2xl font-medium tracking-tight">{product.name}</h3>
                   <p className="text-gray-400 text-sm">{product.description}</p>
                 </div>
               </div>
@@ -273,12 +275,12 @@ export function StripePricingTable() {
                   if (currentPrice && !isCustom) {
                     handleCheckout(currentPrice.id);
                   } else if (isCustom) {
-                    // Handle custom pricing contact
                     window.location.href = '/contact-sales';
                   }
                 }}
                 disabled={loadingButtonId === currentPrice?.id}
-                className={`w-full py-3 rounded-xl transition-all font-medium flex items-center justify-center space-x-2 ${
+                aria-describedby={`plan-${product.id}-title`}
+                className={`w-full py-3 rounded-xl transition-all font-medium flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 ${
                   isPopular
                     ? 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'
                     : isCustom

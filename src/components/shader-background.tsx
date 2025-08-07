@@ -8,12 +8,14 @@ export function ShaderBackground() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Performance checks
+    // Enhanced performance checks
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isLowPowerMode = navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4;
     const hasBatteryAPI = 'getBattery' in navigator && typeof (navigator as any).getBattery === 'function';
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     
-    // Skip on mobile or low battery
-    if (isMobile) {
+    // Skip on mobile, low power, or reduced motion preference
+    if (isMobile || isLowPowerMode || prefersReducedMotion) {
       return;
     }
 
@@ -52,7 +54,8 @@ export function ShaderBackground() {
       camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
       renderer = new THREE.WebGLRenderer({ 
         alpha: true,
-        powerPreference: 'low-power' // Use integrated GPU
+        antialias: false, // Disable for performance
+        powerPreference: 'low-power'
       });
       
       renderer.setSize(window.innerWidth, window.innerHeight);

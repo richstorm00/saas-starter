@@ -11,10 +11,11 @@ export function SubscriptionStatus() {
 
   if (!isLoaded) {
     return (
-      <Card className="bg-slate-800/50 border-slate-700 animate-pulse">
+      <Card className="bg-slate-800/50 border-slate-700 animate-pulse" role="status" aria-label="Loading subscription status">
         <CardContent className="p-6">
-          <div className="h-4 bg-slate-700 rounded w-32 mb-2"></div>
-          <div className="h-3 bg-slate-700 rounded w-24"></div>
+          <div className="h-4 bg-slate-700 rounded w-32 mb-2" aria-hidden="true"></div>
+          <div className="h-3 bg-slate-700 rounded w-24" aria-hidden="true"></div>
+          <span className="sr-only">Loading subscription information...</span>
         </CardContent>
       </Card>
     );
@@ -49,12 +50,13 @@ export function SubscriptionStatus() {
   }
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-500';
-      case 'canceled': return 'bg-red-500';
-      case 'past_due': return 'bg-yellow-500';
-      default: return 'bg-gray-500';
-    }
+    const statusColors: Record<string, string> = {
+      active: 'bg-green-500/20 text-green-400 border-green-500/30',
+      canceled: 'bg-red-500/20 text-red-400 border-red-500/30',
+      past_due: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+      inactive: 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+    };
+    return statusColors[status] || statusColors.inactive;
   };
 
   return (
@@ -67,7 +69,7 @@ export function SubscriptionStatus() {
             </div>
             <div>
               <p className="font-medium text-white">{subscription?.plan} Plan</p>
-              <Badge className={getStatusColor(subscription?.status || 'inactive')}>
+              <Badge className={getStatusColor(subscription?.status || 'inactive')} aria-label={`Subscription status: ${subscription?.status || 'inactive'}`}>
                 {subscription?.status || 'inactive'}
               </Badge>
             </div>
