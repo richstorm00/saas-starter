@@ -235,44 +235,44 @@ export default function AccountPage() {
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Account Settings</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
+        <h1 className="text-3xl font-bold text-white">Account Settings</h1>
+        <p className="text-gray-300 mt-2">
           Manage your account information and subscription details.
         </p>
       </div>
 
       {/* Profile Section */}
-      <Card>
+      <Card className="bg-[#1a1a1a] border-gray-800/50 shadow-xl">
         <CardHeader>
-          <CardTitle className="text-xl">Profile Information</CardTitle>
-          <CardDescription>Your basic account details</CardDescription>
+          <CardTitle className="text-xl text-white">Profile Information</CardTitle>
+          <CardDescription className="text-gray-400">Your basic account details</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="text-sm font-medium text-gray-600">
                 First Name
               </label>
-              <p className="text-gray-900 dark:text-white mt-1">{user?.firstName || 'Not provided'}</p>
+              <p className="text-gray-900 mt-1">{user?.firstName || 'Not provided'}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="text-sm font-medium text-gray-600">
                 Last Name
               </label>
-              <p className="text-gray-900 dark:text-white mt-1">{user?.lastName || 'Not provided'}</p>
+              <p className="text-gray-900 mt-1">{user?.lastName || 'Not provided'}</p>
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="text-sm font-medium text-gray-300">
               Email Address
             </label>
-            <p className="text-gray-900 dark:text-white mt-1">{user?.emailAddresses[0]?.emailAddress}</p>
+            <p className="text-white mt-1">{user?.emailAddresses[0]?.emailAddress}</p>
           </div>
           <div className="pt-4">
             <Button
               onClick={() => setShowPasswordModal(true)}
               variant="outline"
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 border-white/20 text-white hover:bg-white/10"
             >
               <Lock className="w-4 h-4" />
               <span>Change Password</span>
@@ -282,18 +282,18 @@ export default function AccountPage() {
       </Card>
 
       {/* Current Plan Section */}
-      <Card>
+      <Card className="bg-white/5 backdrop-blur-xl border-white/10">
         <CardHeader>
-          <CardTitle className="text-xl">Current Plan</CardTitle>
-          <CardDescription>Your subscription details</CardDescription>
+          <CardTitle className="text-xl text-white">Current Plan</CardTitle>
+          <CardDescription className="text-gray-300">Your subscription details</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {subscriptionData ? (
             <>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Current Plan</p>
-                  <p className="text-lg font-semibold text-gray-900 dark:text-white capitalize">
+                  <p className="text-sm font-medium text-gray-300">Current Plan</p>
+                  <p className="text-lg font-semibold text-white capitalize">
                     {subscriptionData.plan}
                   </p>
                 </div>
@@ -306,13 +306,13 @@ export default function AccountPage() {
               </div>
 
               <div>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Billing Period</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm font-medium text-gray-300">Billing Period</p>
+                <p className="text-sm text-gray-300">
                   Renews on {formatDate(subscriptionData.current_period_end)}
                 </p>
                 {subscriptionData.cancel_at_period_end && (
-                  <Alert className="mt-2">
-                    <AlertTriangle className="h-4 w-4" />
+                  <Alert className="mt-2 bg-yellow-500/10 border-yellow-500/20 text-yellow-200">
+                    <AlertTriangle className="h-4 w-4 text-yellow-400" />
                     <AlertDescription>
                       Your subscription will be canceled at the end of the current billing period.
                     </AlertDescription>
@@ -324,7 +324,7 @@ export default function AccountPage() {
                 <Button
                   onClick={() => setShowChangePlanModal(true)}
                   variant="outline"
-                  className="flex items-center space-x-2"
+                  className="flex items-center space-x-2 border-white/20 text-white hover:bg-white/10"
                 >
                   <CreditCard className="w-4 h-4" />
                   <span>Change Plan</span>
@@ -332,7 +332,7 @@ export default function AccountPage() {
                 <Button
                   onClick={handleManageSubscription}
                   variant="outline"
-                  className="flex items-center space-x-2"
+                  className="flex items-center space-x-2 border-white/20 text-white hover:bg-white/10"
                 >
                   <Settings className="w-4 h-4" />
                   <span>Manage Billing</span>
@@ -351,10 +351,10 @@ export default function AccountPage() {
             </>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-gray-300 mb-4">
                 No active subscription found.
               </p>
-              <a href="/pricing" className="text-blue-600 hover:underline">
+              <a href="/pricing" className="text-blue-400 hover:text-blue-300 transition-colors">
                 View pricing plans
               </a>
             </div>
@@ -364,7 +364,7 @@ export default function AccountPage() {
 
       {/* Change Plan Modal */}
       <Dialog open={showChangePlanModal} onOpenChange={setShowChangePlanModal}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-gray-900/95 backdrop-blur-xl border-white/10">
           <DialogHeader>
             <DialogTitle>Change Plan</DialogTitle>
             <DialogDescription>

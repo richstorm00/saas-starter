@@ -55,13 +55,13 @@ export default function SubscriptionPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'bg-green-500';
+        return 'bg-green-500/20 text-green-400 border-green-500/30';
       case 'canceled':
-        return 'bg-red-500';
+        return 'bg-red-500/20 text-red-400 border-red-500/30';
       case 'past_due':
-        return 'bg-yellow-500';
+        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
       default:
-        return 'bg-gray-500';
+        return 'bg-white/10 text-gray-300 border-white/20';
     }
   };
 
@@ -80,11 +80,11 @@ export default function SubscriptionPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 p-8">
+      <div className="min-h-screen bg-black p-8">
         <div className="max-w-4xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-slate-700 rounded w-48 mb-4"></div>
-            <div className="h-64 bg-slate-700 rounded-lg"></div>
+            <div className="h-8 bg-white/10 rounded w-48 mb-4"></div>
+            <div className="h-64 bg-white/5 rounded-lg"></div>
           </div>
         </div>
       </div>
@@ -93,21 +93,21 @@ export default function SubscriptionPage() {
 
   if (!subscription) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 p-8">
+      <div className="min-h-screen p-8">
         <div className="max-w-4xl mx-auto">
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="bg-[#1a1a1a] border-gray-800/50 shadow-xl">
             <CardHeader>
               <CardTitle className="text-2xl text-white">No Active Subscription</CardTitle>
-              <CardDescription className="text-slate-400">
+              <CardDescription className="text-gray-300">
                 You don't have an active subscription yet.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <p className="text-slate-300">
+                <p className="text-gray-300">
                   Choose a plan to unlock premium features and start building with AI.
                 </p>
-                <Button asChild className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                <Button asChild className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white">
                   <Link href="/pricing">
                     <Zap className="w-4 h-4 mr-2" />
                     View Plans
@@ -122,16 +122,16 @@ export default function SubscriptionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 p-8">
+    <div className="min-h-screen p-8">
       <div className="max-w-4xl mx-auto space-y-8">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">Subscription Management</h1>
-          <p className="text-slate-400">Manage your subscription and billing information</p>
+          <p className="text-gray-300">Manage your subscription and billing information</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8">
           {/* Current Plan */}
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="bg-[#1a1a1a] border-gray-800/50 shadow-xl">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 {getPlanIcon(subscription.plan)}
@@ -140,18 +140,24 @@ export default function SubscriptionPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-slate-300">Plan:</span>
+                <span className="text-gray-300">Plan:</span>
                 <span className="text-white font-semibold">{subscription.plan}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-300">Status:</span>
-                <Badge className={getStatusColor(subscription.status)}>
+                <span className="text-gray-300">Status:</span>
+                <Badge 
+                  variant={subscription.status === 'active' ? 'default' : 'secondary'}
+                  className={`capitalize ${subscription.status === 'active' ? 'bg-green-500/20 text-green-400 border-green-500/30' : ''}`}
+                >
                   {subscription.status}
                 </Badge>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-300">Active:</span>
-                <Badge variant={subscription.active ? "default" : "secondary"}>
+                <span className="text-gray-300">Active:</span>
+                <Badge 
+                  variant={subscription.active ? "default" : "secondary"}
+                  className={subscription.active ? "bg-green-500/20 text-green-400 border-green-500/30" : ""}
+                >
                   {subscription.active ? "Yes" : "No"}
                 </Badge>
               </div>
@@ -159,7 +165,7 @@ export default function SubscriptionPage() {
           </Card>
 
           {/* Billing Details */}
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="bg-[#1a1a1a] border-gray-800/50 shadow-xl">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Calendar className="w-5 h-5" />
@@ -169,7 +175,7 @@ export default function SubscriptionPage() {
             <CardContent className="space-y-4">
               {subscription.currentPeriodStart && (
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-300">Current Period:</span>
+                  <span className="text-gray-300">Current Period:</span>
                   <span className="text-white text-sm">
                     {formatDate(subscription.currentPeriodStart)} - {formatDate(subscription.currentPeriodEnd!)}
                   </span>
@@ -177,7 +183,7 @@ export default function SubscriptionPage() {
               )}
               {subscription.customerId && (
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-300">Customer ID:</span>
+                  <span className="text-gray-300">Customer ID:</span>
                   <span className="text-white text-sm font-mono">
                     {subscription.customerId.substring(0, 8)}...
                   </span>
@@ -185,7 +191,7 @@ export default function SubscriptionPage() {
               )}
               {subscription.subscriptionId && (
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-300">Subscription ID:</span>
+                  <span className="text-gray-300">Subscription ID:</span>
                   <span className="text-white text-sm font-mono">
                     {subscription.subscriptionId.substring(0, 8)}...
                   </span>
@@ -197,14 +203,14 @@ export default function SubscriptionPage() {
 
         {/* Actions */}
         <div className="grid md:grid-cols-3 gap-4">
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="bg-[#1a1a1a] border-gray-800/50 shadow-xl">
             <CardHeader>
               <CardTitle className="text-lg text-white">Manage Subscription</CardTitle>
             </CardHeader>
             <CardContent>
-              <Button 
-                variant="outline" 
-                className="w-full border-slate-600 text-slate-300 hover:bg-slate-700"
+              <Button
+                variant="outline"
+                className="w-full border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white transition-all"
                 onClick={() => {
                   // This would typically open a Stripe Customer Portal
                   window.open('/api/stripe/customer-portal', '_blank');
@@ -216,12 +222,12 @@ export default function SubscriptionPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="bg-[#1a1a1a] border-gray-800/50 shadow-xl">
             <CardHeader>
               <CardTitle className="text-lg text-white">Change Plan</CardTitle>
             </CardHeader>
             <CardContent>
-              <Button asChild variant="outline" className="w-full border-slate-600 text-slate-300 hover:bg-slate-700">
+              <Button asChild variant="outline" className="w-full border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white transition-all">
                 <Link href="/pricing">
                   <Zap className="w-4 h-4 mr-2" />
                   View Plans
@@ -230,12 +236,12 @@ export default function SubscriptionPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="bg-[#1a1a1a] border-gray-800/50 shadow-xl">
             <CardHeader>
               <CardTitle className="text-lg text-white">Support</CardTitle>
             </CardHeader>
             <CardContent>
-              <Button asChild variant="outline" className="w-full border-slate-600 text-slate-300 hover:bg-slate-700">
+              <Button asChild variant="outline" className="w-full border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white transition-all">
                 <Link href="/support">
                   <CreditCard className="w-4 h-4 mr-2" />
                   Get Help
@@ -246,7 +252,7 @@ export default function SubscriptionPage() {
         </div>
 
         {/* Quick Stats */}
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className="bg-white/5 backdrop-blur-xl border-white/10">
           <CardHeader>
             <CardTitle className="text-white">Quick Overview</CardTitle>
           </CardHeader>
@@ -254,7 +260,7 @@ export default function SubscriptionPage() {
             <div className="grid md:grid-cols-4 gap-4 text-center">
               <div>
                 <div className="text-2xl font-bold text-white">{subscription.plan}</div>
-                <div className="text-sm text-slate-400">Current Plan</div>
+                <div className="text-sm text-gray-300">Current Plan</div>
               </div>
               <div>
                 <div className={`text-2xl font-bold ${
@@ -263,7 +269,7 @@ export default function SubscriptionPage() {
                 }`}>
                   {subscription.status}
                 </div>
-                <div className="text-sm text-slate-400">Status</div>
+                <div className="text-sm text-gray-300">Status</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-white">
@@ -272,13 +278,13 @@ export default function SubscriptionPage() {
                     'N/A'
                   }
                 </div>
-                <div className="text-sm text-slate-400">Days Left</div>
+                <div className="text-sm text-gray-300">Days Left</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-white">
                   {subscription.lastPaymentStatus === 'succeeded' ? '✓' : '⚠'}
                 </div>
-                <div className="text-sm text-slate-400">Payment</div>
+                <div className="text-sm text-gray-300">Payment</div>
               </div>
             </div>
           </CardContent>

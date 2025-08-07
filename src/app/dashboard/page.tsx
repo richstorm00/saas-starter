@@ -36,10 +36,10 @@ export default async function DashboardPage() {
     <div className="space-y-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-3xl font-bold text-white mb-2">
             Dashboard
           </h1>
-          <p className="text-gray-600 dark:text-gray-300">
+          <p className="text-gray-300">
             Welcome to your SaaS dashboard
           </p>
         </div>
@@ -47,16 +47,16 @@ export default async function DashboardPage() {
         {/* Subscription Status */}
         {subscriptionData && (
           <div className="mb-6">
-            <Card>
+            <Card className="bg-[#1a1a1a] border-gray-800/50 shadow-xl">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-lg">Your Subscription</CardTitle>
-                    <CardDescription>Current plan and billing status</CardDescription>
+                    <CardTitle className="text-lg text-white">Your Subscription</CardTitle>
+                    <CardDescription className="text-gray-400">Current plan and billing status</CardDescription>
                   </div>
-                  <Badge 
+                  <Badge
                     variant={subscriptionData.status === 'active' ? 'default' : 'secondary'}
-                    className="capitalize"
+                    className="capitalize bg-blue-500/20 text-blue-400 border-blue-500/30"
                   >
                     {subscriptionData.plan} - {subscriptionData.status}
                   </Badge>
@@ -64,11 +64,11 @@ export default async function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-gray-300">
                     Next billing date: {new Date(subscriptionData.current_period_end * 1000).toLocaleDateString()}
                   </p>
                   <Link href="/dashboard/subscription">
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white">
                       <CreditCard className="w-4 h-4 mr-2" />
                       Manage
                     </Button>
@@ -82,24 +82,24 @@ export default async function DashboardPage() {
         {/* Main Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Account Management */}
-          <Card className="lg:col-span-2">
+          <Card className="lg:col-span-2 bg-[#1a1a1a] border-gray-800/50 shadow-xl">
             <CardHeader>
-              <CardTitle className="flex items-center">
+              <CardTitle className="flex items-center text-white">
                 <User className="w-5 h-5 mr-2" />
                 Account Management
               </CardTitle>
-              <CardDescription>Manage your account settings and subscription</CardDescription>
+              <CardDescription className="text-gray-400">Manage your account settings and subscription</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid sm:grid-cols-2 gap-4">
                 <Link href="/dashboard/account">
-                  <Button className="w-full" variant="outline">
+                  <Button className="w-full" variant="outline" className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white transition-all">
                     <Settings className="w-4 h-4 mr-2" />
                     Account Settings
                   </Button>
                 </Link>
                 <Link href="/dashboard/subscription">
-                  <Button className="w-full" variant="outline">
+                  <Button className="w-full" variant="outline" className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white transition-all">
                     <CreditCard className="w-4 h-4 mr-2" />
                     Subscription
                   </Button>
@@ -109,25 +109,25 @@ export default async function DashboardPage() {
           </Card>
 
           {/* Quick Actions */}
-          <Card>
+          <Card className="bg-[#1a1a1a] border-gray-800/50 shadow-xl">
             <CardHeader>
-              <CardTitle className="flex items-center">
+              <CardTitle className="flex items-center text-white">
                 <BarChart3 className="w-5 h-5 mr-2" />
                 Quick Actions
               </CardTitle>
-              <CardDescription>Common tasks and shortcuts</CardDescription>
+              <CardDescription className="text-gray-400">Common tasks and shortcuts</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <Button className="w-full" variant="outline">
+                <Button className="w-full" variant="outline" className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white transition-all">
                   <Users className="w-4 h-4 mr-2" />
                   Invite Team Members
                 </Button>
-                <Button className="w-full" variant="outline">
+                <Button className="w-full" variant="outline" className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white transition-all">
                   <BarChart3 className="w-4 h-4 mr-2" />
                   View Analytics
                 </Button>
-                <Button className="w-full" variant="outline">
+                <Button className="w-full" variant="outline" className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white transition-all">
                   <FileText className="w-4 h-4 mr-2" />
                   Documentation
                 </Button>
@@ -136,27 +136,27 @@ export default async function DashboardPage() {
           </Card>
 
           {/* Getting Started */}
-          <Card className="lg:col-span-2">
+          <Card className="lg:col-span-2 bg-white/5 backdrop-blur-xl border-white/10">
             <CardHeader>
-              <CardTitle>Getting Started</CardTitle>
-              <CardDescription>Next steps to customize your app</CardDescription>
+              <CardTitle className="text-white">Getting Started</CardTitle>
+              <CardDescription className="text-gray-300">Next steps to customize your app</CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+              <ul className="space-y-3 text-sm text-gray-300">
                 <li className="flex items-start">
-                  <span className="text-blue-600 mr-2">1.</span>
+                  <span className="text-blue-400 mr-2">1.</span>
                   <span>Update branding in src/app</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-blue-600 mr-2">2.</span>
+                  <span className="text-blue-400 mr-2">2.</span>
                   <span>Configure your pricing plans</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-blue-600 mr-2">3.</span>
+                  <span className="text-blue-400 mr-2">3.</span>
                   <span>Set up webhook endpoints</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-blue-600 mr-2">4.</span>
+                  <span className="text-blue-400 mr-2">4.</span>
                   <span>Customize email templates</span>
                 </li>
               </ul>
@@ -164,24 +164,24 @@ export default async function DashboardPage() {
           </Card>
 
           {/* Resources */}
-          <Card>
+          <Card className="bg-white/5 backdrop-blur-xl border-white/10">
             <CardHeader>
-              <CardTitle>Resources</CardTitle>
-              <CardDescription>Helpful links and documentation</CardDescription>
+              <CardTitle className="text-white">Resources</CardTitle>
+              <CardDescription className="text-gray-300">Helpful links and documentation</CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+              <ul className="space-y-2 text-sm text-gray-300">
                 <li>
-                  <a href="#" className="text-blue-600 hover:underline">Documentation</a>
+                  <a href="#" className="text-blue-400 hover:text-blue-300 transition-colors">Documentation</a>
                 </li>
                 <li>
-                  <a href="#" className="text-blue-600 hover:underline">API Reference</a>
+                  <a href="#" className="text-blue-400 hover:text-blue-300 transition-colors">API Reference</a>
                 </li>
                 <li>
-                  <a href="#" className="text-blue-600 hover:underline">Support</a>
+                  <a href="#" className="text-blue-400 hover:text-blue-300 transition-colors">Support</a>
                 </li>
                 <li>
-                  <a href="#" className="text-blue-600 hover:underline">Community</a>
+                  <a href="#" className="text-blue-400 hover:text-blue-300 transition-colors">Community</a>
                 </li>
               </ul>
             </CardContent>

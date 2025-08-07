@@ -28,10 +28,10 @@ function NavItem({ href, icon, label, isActive, onClick }: NavItemProps) {
     <Link
       href={href}
       onClick={onClick}
-      className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+      className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
         isActive
-          ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
-          : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white hover:translate-x-1 transition-all duration-200 ease-in-out hover:shadow-md hover:shadow-gray-200/50 dark:hover:shadow-gray-900/50'
+          ? 'bg-gray-800/60 text-white border border-gray-700/50 shadow-sm'
+          : 'text-gray-300 hover:bg-gray-800/30 hover:text-white hover:translate-x-1'
       }`}
     >
       {icon}
@@ -77,30 +77,30 @@ export default function DashboardLayout({
     : user?.emailAddresses[0]?.emailAddress?.[0]?.toUpperCase() || 'U';
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-[#0a0a0a] text-gray-100">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-20 bg-gray-600 bg-opacity-75 lg:hidden"
+        <div
+          className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+      <div className={`fixed inset-y-0 left-0 z-30 w-64 bg-[#111111] backdrop-blur-xl border-r border-gray-800/50 shadow-2xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="flex flex-col h-full">
           {/* Logo/Header */}
-          <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between px-4 py-4 border-b border-gray-800/50">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
                 <Zap className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-medium tracking-tight text-gray-900 dark:text-white">Quantum AI</span>
+              <span className="text-xl font-semibold tracking-tight text-white">Quantum AI</span>
             </div>
             <button
-              className="lg:hidden"
+              className="lg:hidden text-gray-400 hover:text-blue-400 transition-colors"
               onClick={() => setSidebarOpen(false)}
             >
               <X className="w-6 h-6" />
@@ -120,21 +120,21 @@ export default function DashboardLayout({
           </nav>
 
           {/* User section */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+          <div className="p-4 border-t border-gray-800/50">
+            <div className="flex items-center space-x-3 mb-4 p-3 rounded-lg bg-gray-800/30 border border-gray-700/50">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
                 <span className="text-white text-sm font-medium">{userInitials}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                <p className="text-sm font-medium text-white truncate">
                   {user?.firstName} {user?.lastName}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                <p className="text-xs text-gray-400 truncate">
                   {user?.emailAddresses[0]?.emailAddress}
                 </p>
               </div>
             </div>
-            
+
             {/* Account and Support links */}
             <nav className="space-y-1 mb-4">
               {navItems.slice(1).map((item) => (
@@ -146,10 +146,10 @@ export default function DashboardLayout({
                 />
               ))}
             </nav>
-            
+
             <button
               onClick={handleSignOut}
-              className="flex items-center space-x-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
+              className="flex items-center space-x-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-gray-800/50 hover:text-white transition-all duration-200"
             >
               <LogOut className="w-5 h-5" />
               <span>Sign Out</span>
@@ -161,15 +161,15 @@ export default function DashboardLayout({
       {/* Main content */}
       <div className="lg:ml-64 min-h-screen">
         {/* Mobile header */}
-        <div className="lg:hidden flex items-center justify-between px-4 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="lg:hidden flex items-center justify-between px-4 py-4 bg-[#111111]/95 backdrop-blur-sm border-b border-gray-800/50">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800/50 transition-colors"
           >
             <Menu className="w-6 h-6" />
           </button>
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
               <span className="text-white text-sm font-medium">{userInitials}</span>
             </div>
           </div>
